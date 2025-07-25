@@ -1,0 +1,348 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    padding: 20px;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    gap: 20px;
+}
+
+.main-container {
+    display: flex;
+    gap: 20px;
+    width: 100%;
+    max-width: 1200px;
+    align-items: flex-start;
+}
+
+.container {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    max-width: 600px;
+    width: 100%;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+.sidebar {
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(10px);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    width: 350px;
+    max-height: 80vh;
+    overflow-y: auto;
+    display: none;
+    flex-shrink: 0;
+}
+
+.sidebar.show {
+    display: block;
+}
+
+.sidebar h3 {
+    color: #333;
+    margin-bottom: 20px;
+    font-size: 1.5em;
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    text-align: center;
+    border-bottom: 2px solid rgba(102, 126, 234, 0.2);
+    padding-bottom: 10px;
+}
+
+.recipe-stats {
+    display: flex;
+    justify-content: space-around;
+    margin-bottom: 20px;
+    padding: 15px;
+    background: rgba(102, 126, 234, 0.1);
+    border-radius: 10px;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-number {
+    font-size: 1.8em;
+    font-weight: bold;
+    display: block;
+}
+
+.stat-number.success { color: #4caf50; }
+.stat-number.warning { color: #ff9800; }
+.stat-number.error { color: #f44336; }
+
+.stat-label {
+    font-size: 0.8em;
+    color: #666;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.recipe-list {
+    max-height: 50vh;
+    overflow-y: auto;
+    border: 1px solid rgba(102, 126, 234, 0.2);
+    border-radius: 10px;
+    background: white;
+}
+
+.recipe-item {
+    display: flex;
+    align-items: center;
+    padding: 10px 15px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    transition: background-color 0.2s ease;
+    position: relative;
+}
+
+.recipe-item:hover {
+    background-color: rgba(102, 126, 234, 0.05);
+}
+
+.recipe-item:last-child {
+    border-bottom: none;
+}
+
+.recipe-icon {
+    margin-right: 10px;
+    font-size: 1.2em;
+    width: 20px;
+    text-align: center;
+}
+
+.recipe-icon.success { color: #4caf50; }
+.recipe-icon.warning { color: #ff9800; }
+.recipe-icon.error { color: #f44336; }
+
+.recipe-name {
+    flex: 1;
+    text-align: left;
+    font-size: 0.9em;
+    color: #333;
+}
+
+.recipe-tooltip {
+    position: absolute;
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 0.8em;
+    white-space: nowrap;
+    z-index: 1000;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    left: 50%;
+    transform: translateX(-50%);
+    bottom: 100%;
+    margin-bottom: 5px;
+}
+
+.recipe-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    margin-left: -5px;
+    border: 5px solid transparent;
+    border-top-color: rgba(0, 0, 0, 0.9);
+}
+
+.recipe-item:hover .recipe-tooltip {
+    opacity: 1;
+}
+
+@media (max-width: 1024px) {
+    body {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .main-container {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .sidebar {
+        width: 100%;
+        max-width: 600px;
+        max-height: 400px;
+    }
+}
+
+h1 {
+    color: #333;
+    margin-bottom: 10px;
+    font-size: 2.5em;
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.subtitle {
+    color: #666;
+    margin-bottom: 30px;
+    font-size: 1.1em;
+}
+
+.upload-area {
+    border: 3px dashed #667eea;
+    border-radius: 15px;
+    padding: 40px 20px;
+    margin: 30px 0;
+    background: rgba(102, 126, 234, 0.05);
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+}
+
+.upload-area:hover {
+    border-color: #764ba2;
+    background: rgba(118, 75, 162, 0.1);
+    transform: translateY(-2px);
+}
+
+.upload-area.dragover {
+    border-color: #764ba2;
+    background: rgba(118, 75, 162, 0.15);
+    transform: scale(1.02);
+}
+
+.upload-icon {
+    font-size: 3em;
+    color: #667eea;
+    margin-bottom: 15px;
+    display: block;
+}
+
+.upload-text {
+    color: #333;
+    font-size: 1.2em;
+    margin-bottom: 10px;
+}
+
+.upload-subtext {
+    color: #666;
+    font-size: 0.9em;
+}
+
+input[type="file"] {
+    display: none;
+}
+
+.btn {
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 25px;
+    font-size: 1.1em;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin: 10px;
+    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+}
+
+.btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 15px 30px rgba(102, 126, 234, 0.4);
+}
+
+.btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 10px;
+    background: #f0f0f0;
+    border-radius: 5px;
+    margin: 20px 0;
+    overflow: hidden;
+    display: none;
+}
+
+.progress-fill {
+    height: 100%;
+    background: linear-gradient(45deg, #667eea, #764ba2);
+    width: 0%;
+    transition: width 0.3s ease;
+    border-radius: 5px;
+}
+
+.status {
+    margin: 20px 0;
+    padding: 15px;
+    border-radius: 10px;
+    display: none;
+}
+
+.status.success {
+    background: rgba(76, 175, 80, 0.1);
+    color: #4caf50;
+    border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.status.error {
+    background: rgba(244, 67, 54, 0.1);
+    color: #f44336;
+    border: 1px solid rgba(244, 67, 54, 0.3);
+}
+
+.status.info {
+    background: rgba(33, 150, 243, 0.1);
+    color: #2196f3;
+    border: 1px solid rgba(33, 150, 243, 0.3);
+}
+
+.file-info {
+    background: rgba(102, 126, 234, 0.1);
+    padding: 15px;
+    border-radius: 10px;
+    margin: 15px 0;
+    display: none;
+}
+
+.file-name {
+    font-weight: bold;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.file-size {
+    color: #666;
+    font-size: 0.9em;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+}
+
+.processing {
+    animation: pulse 2s infinite;
+}

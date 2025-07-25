@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Generator</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <link rel="stylesheet" href="../css/uncrafting_recipe_gen.css">
+</head>
+<body>
+    <div class="main-container">
+        <div class="container">
+            <h1>🎮 Recipe Generator</h1>
+            <p class="subtitle">Convert Minecraft recipe JSON files to JavaScript</p>
+            
+            <div class="upload-area" id="uploadArea">
+                <span class="upload-icon">📁</span>
+                <div class="upload-text">Drop your recipes zip file here</div>
+                <div class="upload-subtext">or click to browse</div>
+                <input type="file" id="fileInput" accept=".zip" />
+            </div>
+
+            <div class="file-info" id="fileInfo">
+                <div class="file-name" id="fileName"></div>
+                <div class="file-size" id="fileSize"></div>
+            </div>
+
+            <div class="progress-bar" id="progressBar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+
+            <div class="status" id="status"></div>
+
+            <button class="btn" id="processBtn" onclick="processFile()" disabled>
+                🔄 Generate Recipes
+            </button>
+
+            <button class="btn" id="downloadBtn" onclick="downloadFile()" style="display: none;">
+                📥 Download recipes.js
+            </button>
+        </div>
+
+        <div class="sidebar" id="sidebar">
+            <h3>📋 Processing Results</h3>
+            
+            <div class="recipe-stats">
+                <div class="stat-item">
+                    <span class="stat-number success" id="successCount">0</span>
+                    <div class="stat-label">Added</div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number warning" id="warningCount">0</span>
+                    <div class="stat-label">Skipped</div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number error" id="errorCount">0</span>
+                    <div class="stat-label">Errors</div>
+                </div>
+            </div>
+
+            <div class="recipe-list" id="recipeList">
+                <!-- Recipe items will be dynamically added here -->
+            </div>
+        </div>
+    </div>
+
+    <script src="../javascript/uncrafting_recipe_gen.js"></script>
+</body>
+</html>
