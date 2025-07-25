@@ -576,7 +576,7 @@ export const BeaconRecipe = new Recipe({
     { name: "minecraft:glass", data: 0 },
     { name: "minecraft:glass", data: 0 },
     { name: "minecraft:glass", data: 0 },
-    { name: "minecraft:netherstar", data: 0 },
+    { name: "minecraft:nether_star", data: 0 },
     { name: "minecraft:glass", data: 0 },
     { name: "minecraft:obsidian", data: 0 },
     { name: "minecraft:obsidian", data: 0 },
