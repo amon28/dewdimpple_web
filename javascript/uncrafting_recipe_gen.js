@@ -194,6 +194,8 @@ function fixName(itemName) {
         return "minecraft:carrot_on_a_stick";
     } else if (itemName === "minecraft:stone_crafting_materials") {
         return "minecraft:cobblestone";
+    } else if(itemName === "minecraft:netherstart") {
+        return "minecraft:nether_star";
     }
     return itemName;
 }
