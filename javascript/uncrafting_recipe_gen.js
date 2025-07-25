@@ -1,3 +1,5 @@
+import {defaultRecipeList, defaultRecipes} from './recipe_template.js'
+
 // Configuration - matches your Python script
 const EXCLUDE_TYPES = ['plank', 'dye', 'banner', 'map', 'stew', 'stripped', 'cake'];
 
@@ -544,7 +546,10 @@ return counts;
 }
 // —————————————————————————————————————————————————————————————————————
 //  Auto‑generated recipe instances
+//  DEFAULT GENERATED RECIPES
+${defaultRecipes}
 
+//  CUSTOM RECIPES
 `;
         
         const body = recipes.map(([name, res, items]) => 
@@ -554,6 +559,9 @@ return counts;
         const namesList = recipes.map(([name]) => name).join(',\n  ');
         const footer = `// —————————————————————————————————————————————————————————————————————
 const recipeList = [
+//  DEFAULT GENERATED LIST
+${defaultRecipeList}
+// CUSTOM LIST
 ${namesList}
 ];
 
