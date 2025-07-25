@@ -6,13 +6,16 @@
     <title>Recipe Generator</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <link rel="stylesheet" href="../css/uncrafting_recipe_gen.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 <body>
+    <div class="left-sidebar-container">
+        <!--<h3><i class="fa-solid fa-house"></i> Home</h3>-->
+    </div>
     <div class="main-container">
         <div class="container">
-            <h1>🎮 Recipe Generator</h1>
-            <p class="subtitle">Convert Minecraft recipe JSON files to JavaScript</p>
-            
+            <h1>UnCrafting Recipe Generator</h1>
+            <p class="subtitle">Generate Recipe.js file for UnCrafting Table Addon. Create a zip using your recipe folder.</p> 
             <div class="upload-area" id="uploadArea">
                 <span class="upload-icon">📁</span>
                 <div class="upload-text">Drop your recipes zip file here</div>
@@ -32,16 +35,16 @@
             <div class="status" id="status"></div>
 
             <button class="btn" id="processBtn" onclick="processFile()" disabled>
-                🔄 Generate Recipes
+                <i class="fa-solid fa-rotate"></i> Generate Recipes
             </button>
 
             <button class="btn" id="downloadBtn" onclick="downloadFile()" style="display: none;">
-                📥 Download recipes.js
+                <i class="fa-solid fa-download"></i> Download recipes.js
             </button>
         </div>
 
         <div class="sidebar" id="sidebar">
-            <h3>📋 Processing Results</h3>
+            <h3><i class="fa-solid fa-gears"></i> Processing Results</h3>
             
             <div class="recipe-stats">
                 <div class="stat-item">

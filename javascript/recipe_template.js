@@ -1319,7 +1319,7 @@ export const BowRecipe = new Recipe({
   ]
 });
 
-export const BowlRecipeidRecipe = new Recipe({
+export const BowlRecipeIdRecipe = new Recipe({
   result: { name: "minecraft:bowl", data: 0, count: 4},
   items: [
     { name: "minecraft:oak_planks", data: 0 },
@@ -2129,7 +2129,7 @@ export const CherryWoodFromLogRecipe = new Recipe({
   ]
 });
 
-export const ChestRecipeidRecipe = new Recipe({
+export const ChestRecipeIdRecipe = new Recipe({
   result: { name: "minecraft:chest", data: 0, count: 1},
   items: [
     { name: "minecraft:oak_planks", data: 0 },
@@ -2849,7 +2849,7 @@ export const CrafterRecipe = new Recipe({
   ]
 });
 
-export const WorkbenchRecipeidRecipe = new Recipe({
+export const WorkBenchRecipeIdRecipe = new Recipe({
   result: { name: "minecraft:crafting_table", data: 0, count: 1},
   items: [
     { name: "minecraft:oak_planks", data: 0 },
@@ -2984,7 +2984,7 @@ export const CraftingTableCutCopperStairsRecipe = new Recipe({
   ]
 });
 
-export const WorkbenchRecipeidFromOakRecipe = new Recipe({
+export const WorkBenchRecipeIdFromOakRecipe = new Recipe({
   result: { name: "minecraft:crafting_table", data: 0, count: 1},
   items: [
     { name: "minecraft:oak_planks", data: 0 },
@@ -4124,7 +4124,7 @@ export const DarkPrismarineFromInkSacRecipe = new Recipe({
   ]
 });
 
-export const DaylightdetectorRecipeidRecipe = new Recipe({
+export const DaylightDetectorRecipeIdRecipe = new Recipe({
   result: { name: "minecraft:daylight_detector", data: 0, count: 1},
   items: [
     { name: "minecraft:glass", data: 0 },
@@ -5249,7 +5249,7 @@ export const FermentedSpiderEyeRecipe = new Recipe({
   ]
 });
 
-export const FirechargeCoalSulphurRecipeidRecipe = new Recipe({
+export const FireChargeCoalSulphurRecipeIdRecipe = new Recipe({
   result: { name: "minecraft:fire_charge", data: 0, count: 3},
   items: [
     { name: "minecraft:blaze_powder", data: 0 },
@@ -5264,7 +5264,7 @@ export const FirechargeCoalSulphurRecipeidRecipe = new Recipe({
   ]
 });
 
-export const FirechargeBlazePowderCoalSulphurRecipeidRecipe = new Recipe({
+export const FireChargeBlazePowderCoalSulphurRecipeIdRecipe = new Recipe({
   result: { name: "minecraft:fire_charge", data: 0, count: 3},
   items: [
     { name: "minecraft:blaze_powder", data: 0 },
@@ -6419,7 +6419,7 @@ export const ItemFrameRecipe = new Recipe({
   ]
 });
 
-export const JukeboxRecipeidRecipe = new Recipe({
+export const JukeboxRecipeIdRecipe = new Recipe({
   result: { name: "minecraft:jukebox", data: 0, count: 1},
   items: [
     { name: "minecraft:oak_planks", data: 0 },
@@ -11564,7 +11564,7 @@ export const TorchRecipe = new Recipe({
   ]
 });
 
-export const TorchCharcoalRecipeidRecipe = new Recipe({
+export const TorchCharcoalRecipeIdRecipe = new Recipe({
   result: { name: "minecraft:torch", data: 0, count: 4},
   items: [
     { name: "minecraft:charcoal", data: 0 },
@@ -11579,7 +11579,7 @@ export const TorchCharcoalRecipeidRecipe = new Recipe({
   ]
 });
 
-export const TorchRecipeidRecipe = new Recipe({
+export const TorchRecipeIdRecipe = new Recipe({
   result: { name: "minecraft:torch", data: 0, count: 4},
   items: [
     { name: "minecraft:coal", data: 0 },
@@ -13049,7 +13049,7 @@ BoneMealFromBlockRecipe,
 BoneMealFromBoneRecipe,
 BookRecipe,
 BowRecipe,
-BowlRecipeidRecipe,
+BowlRecipeIdRecipe,
 BreadRecipe,
 BrewingStandRecipe,
 BrewingStandFromBlackstoneRecipe,
@@ -13103,7 +13103,7 @@ CherrySlabRecipe,
 CherryStairsRecipe,
 CherryTrapdoorRecipe,
 CherryWoodFromLogRecipe,
-ChestRecipeidRecipe,
+ChestRecipeIdRecipe,
 ChestBoatRecipe,
 ChestMinecartRecipe,
 ChiseledBookshelfRecipe,
@@ -13151,7 +13151,7 @@ CopperPickaxeRecipe,
 CopperShovelRecipe,
 CopperSwordRecipe,
 CrafterRecipe,
-WorkbenchRecipeidRecipe,
+WorkBenchRecipeIdRecipe,
 CraftingTableChiseledCopperRecipe,
 CopperBulbRecipe,
 CopperDoorRecipe,
@@ -13160,7 +13160,7 @@ CopperTrapdoorRecipe,
 CraftingTableCutCopperRecipe,
 CraftingTableCutCopperSlabRecipe,
 CraftingTableCutCopperStairsRecipe,
-WorkbenchRecipeidFromOakRecipe,
+WorkBenchRecipeIdFromOakRecipe,
 ExposedChiseledCopperRecipe,
 ExposedCopperBulbRecipe,
 ExposedCopperGrateRecipe,
@@ -13236,7 +13236,7 @@ DarkOakWoodRecipe,
 DarkOakWoodenSlabRecipe,
 DarkPrismarineRecipe,
 DarkPrismarineFromInkSacRecipe,
-DaylightdetectorRecipeidRecipe,
+DaylightDetectorRecipeIdRecipe,
 DaylightDetectorFromCrimsonSlabRecipe,
 DaylightDetectorFromMangroveSlabRecipe,
 DaylightDetectorFromWarpedSlabRecipe,
@@ -13311,8 +13311,8 @@ EyeArmorTrimSmithingTemplateDuplicateRecipe,
 FenceRecipe,
 FenceGateRecipe,
 FermentedSpiderEyeRecipe,
-FirechargeCoalSulphurRecipeidRecipe,
-FirechargeBlazePowderCoalSulphurRecipeidRecipe,
+FireChargeCoalSulphurRecipeIdRecipe,
+FireChargeBlazePowderCoalSulphurRecipeIdRecipe,
 FishingRodRecipe,
 FletchingTableRecipe,
 FlintAndSteelRecipe,
@@ -13389,7 +13389,7 @@ IronShovelRecipe,
 IronSwordRecipe,
 IronTrapdoorRecipe,
 ItemFrameRecipe,
-JukeboxRecipeidRecipe,
+JukeboxRecipeIdRecipe,
 JungleBoatRecipe,
 JungleChestBoatRecipe,
 JungleDoorRecipe,
@@ -13732,8 +13732,8 @@ TintedGlassRecipe,
 TntRecipe,
 TntMinecartRecipe,
 TorchRecipe,
-TorchCharcoalRecipeidRecipe,
-TorchRecipeidRecipe,
+TorchCharcoalRecipeIdRecipe,
+TorchRecipeIdRecipe,
 TrappedChestRecipe,
 TripwireHookRecipe,
 TuffBrickSlabRecipe,
@@ -13824,5 +13824,4 @@ YellowConcretePowderRecipe,
 YellowStainedGlassRecipe,
 YellowStainedGlassPaneRecipe,
 YellowStainedGlassPaneFromPaneRecipe,
-YellowStainedHardenedClayRecipe,
-`
+YellowStainedHardenedClayRecipe,`

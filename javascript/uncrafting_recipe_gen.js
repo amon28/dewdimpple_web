@@ -360,6 +360,7 @@ async function processFile() {
         
         const recipes = [];
         const seen = new Set();
+        defaultRecipeList.replace(/[\n ]/g,"").split(",").forEach(name => seen.add(name));
         let processedCount = 0;
         const totalFiles = Object.keys(zipContent.files).filter(name => 
             !zipContent.files[name].dir && name.endsWith('.json')
@@ -559,9 +560,7 @@ ${defaultRecipes}
         const namesList = recipes.map(([name]) => name).join(',\n  ');
         const footer = `// —————————————————————————————————————————————————————————————————————
 const recipeList = [
-//  DEFAULT GENERATED LIST
 ${defaultRecipeList}
-// CUSTOM LIST
 ${namesList}
 ];
 
@@ -621,3 +620,6 @@ function showProgress(show) {
 function setProgress(percent) {
     progressFill.style.width = `${percent}%`;
 }
+
+window.processFile = processFile;
+window.downloadFile = downloadFile;
