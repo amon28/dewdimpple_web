@@ -608,6 +608,87 @@ function downloadFile() {
     }, 2000);
 }
 
+function downloadRawFile() {
+    // Generate the default recipes.js content only (raw)
+    const header = `// recipes.js
+//
+// ⚠️  This file is auto-generated. Do not manually edit below this line.
+
+export class Recipe {
+/**
+ * @param {Object} options
+ * @param {string|Object} options.result - The resulting item identifier or an object { name, data }
+ * @param {string[]} [options.pattern] - Array of pattern strings (optional)
+ * @param {Object.<string, string>} [options.key] - Mapping of pattern symbols to item identifiers (optional)
+ * @param {Array.<string|Object>} [options.items] - Flat list of ingredient identifiers or objects { name, data }
+ */
+constructor({ result, pattern, key, items }) {
+if (typeof result === 'string') {
+this.result = { name: result, data: 0, count: 1 };
+} else {
+this.result = { name: result.name, data: result.data ?? 0, count: result.count ?? 1 };
+}
+this.pattern = pattern;
+this.key = key;
+if (Array.isArray(items)) {
+this.items = items.map(entry => {
+if (typeof entry === 'string') {
+    return { name: entry, data: 0, count: 1 };
+}
+return { name: entry.name, data: entry.data ?? 0, count: entry.count ?? 1 };
+});
+} else {
+this.items = items;
+}
+}
+getRequiredItems() {
+if (Array.isArray(this.items)) {
+return {items: this.items, requiredAmount: this.result.count};
+}
+const counts = {};
+for (const symbol in this.key) {
+const itemName = this.key[symbol];
+let count = 0;
+for (const row of this.pattern) {
+for (const char of row) {
+    if (char === symbol) count++;
+}
+}
+if (count > 0) counts[itemName] = count;
+}
+return counts;
+}
+}
+// —————————————————————————————————————————————————————————————————————
+//  Auto‑generated recipe instances
+//  DEFAULT GENERATED RECIPES
+${defaultRecipes}
+
+// —————————————————————————————————————————————————————————————————————
+const recipeList = [
+${defaultRecipeList}
+];
+
+export { recipeList };
+`;
+
+    // Download the raw file
+    const blob = new Blob([header], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'recipes.js';
+    a.rel = 'nofollow';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+
+    setTimeout(() => {
+        showStatus('💡 Raw recipes.js downloaded.', 'info');
+    }, 2000);
+}
+
 function showStatus(message, type) {
     status.textContent = message;
     status.className = `status ${type}`;
@@ -625,3 +706,4 @@ function setProgress(percent) {
 
 window.processFile = processFile;
 window.downloadFile = downloadFile;
+window.downloadRawFile = downloadRawFile;

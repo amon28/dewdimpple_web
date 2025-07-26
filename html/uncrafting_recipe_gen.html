@@ -34,13 +34,19 @@
 
             <div class="status" id="status"></div>
 
-            <button class="btn" id="processBtn" onclick="processFile()" disabled>
-                <i class="fa-solid fa-rotate"></i> Generate Recipes
-            </button>
+            <div style="display: flex; gap: 12px; justify-content: center; margin-bottom: 20px;">
+                <button class="btn" id="downloadRawBtn" onclick="downloadRawFile()">
+                    <i class="fa-solid fa-download"></i> Download Raw recipes.js
+                </button>
+                <button class="btn" id="processBtn" onclick="processFile()" disabled>
+                    <i class="fa-solid fa-rotate"></i> Generate Recipes
+                </button>
+            </div>
 
             <button class="btn" id="downloadBtn" onclick="downloadFile()" style="display: none;">
                 <i class="fa-solid fa-download"></i> Download recipes.js
             </button>
+       
         </div>
 
         <div class="sidebar" id="sidebar">
