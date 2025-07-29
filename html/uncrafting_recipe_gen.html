@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Recipe Generator</title>
+    <link rel="icon" type="image/png" href="../images/favicon.png">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
     <link rel="stylesheet" href="../css/uncrafting_recipe_gen.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
@@ -20,11 +21,11 @@
 </head>
 <body>
     <div class="left-sidebar-container">
-        <div class="left-sidebar-items">
-            <h3><i class="fa-solid fa-house"></i> Home</h3>
+        <div class="left-sidebar-items ls-item-home" onclick="window.location.href='../index.html'">
+            <p><i class="fa-solid fa-house"></i> Home</p>
         </div>
-        <div class="left-sidebar-items">
-            <h3><i class="fa-solid fa-house"></i>Tip Me</h3>
+        <div class="left-sidebar-items ls-item-kofi" onclick="window.open('https://ko-fi.com/dewdimpple', '_blank')">
+            <img src="../images/kofilogo.webp" alt="Kofi Logo" style="width: 20px; height: 20px; margin-right: 5px;">Tip Me
         </div>
     </div>
     <div class="main-container">

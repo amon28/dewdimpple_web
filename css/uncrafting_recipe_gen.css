@@ -48,14 +48,33 @@ body {
 }
 
 .left-sidebar-items {
-    border-radius: 20px;
+    border-radius: 8px;
     padding: 10px;
-    margin-bottom: 10px;
+    margin-top: 10px;
     cursor: pointer;
+    text-align: center;  
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: center;
+    width: 100px;
 }
 
 .ls-item-home {
     background-color: whitesmoke;
+    color: black;
+}
+
+.ls-item-home:hover {
+    background-color: gainsboro
+}
+
+.ls-item-kofi {
+    background-color: red;
+    color: white;
+}
+.ls-item-kofi:hover {
+    background-color: brown
 }
 
 .sidebar {
