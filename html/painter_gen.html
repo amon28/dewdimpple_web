@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Painter Gen</title>
+  
+  <link rel="icon" type="image/png" href="./images/favicon.png">
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+  <!-- Custom CSS -->
+  <link rel="stylesheet" type="text/css" href="../css/painter_gen.css">
+
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-CLTRQ42CK9"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', 'G-CLTRQ42CK9');
+  </script>
+
+</head>
+<body style="background-image: url('./images/background.jpg'); background-repeat: repeat-y; height: 90vh;">
+    
+    <div class="container-fluid">
+      <button id="openTutorialBtn" class="btn btn-primary mb-2 fixed-btn">
+        <i class="fas fa-book"></i> Tutorial
+      </button>
+      <button id="content-links-btn" class="btn btn-primary mb-2 fixed-btn" style="background-color: green; border-color: green;">
+        <i class="fas fa-link"></i> Links
+      </button>
+      <button id="donateBtn" class="btn btn-primary fixed-btn" onclick="window.open('https://ko-fi.com/dewdimpple', '_blank')">
+        <img src="./images/kofilogo.webp" alt="Kofi Logo" style="width: 20px; height: 20px; margin-right: 5px;"> Tip Me
+      </button>
+    </div>
+    
+
+  <div class="container mt-5"> 
+    <div class="card shadow p-4">
+      <h2 class="text-center">Generate Paint</h2>
+
+      <!-- Toggle Upload/URL -->
+      <div class="mb-3">
+        <label class="form-label">Choose Image Source</label>
+        <div class="form-check form-switch">
+          <input class="form-check-input" type="checkbox" id="toggleImageSource">
+          <label class="form-check-label" for="toggleImageSource">Use Online Image</label>
+        </div>
+      </div>
+
+      <!-- File Upload Input -->
+      <div id="uploadSection" class="mb-3">
+        <label for="imageUpload" class="form-label">Choose an image</label>
+        <input class="form-control" type="file" id="imageUpload" accept="image/*">
+      </div>
+
+      <!-- URL Input (Hidden Initially) -->
+      <div id="urlSection" class="mb-3" style="display: none;">
+        <label for="imageUrl" class="form-label">Enter Image URL</label>
+        <input class="form-control" type="text" id="imageUrl" placeholder="https://example.com/image.png">
+        <button class="btn btn-primary mt-2" id="loadImageUrl">Load Image</button>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="progress mb-3" style="height: 25px; display: none;">
+        <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%;">0%</div>
+      </div>
+
+      <!-- Image Comparison: Original & Resized -->
+      <div id="imageComparison" class="row mt-3" style="display: none;">
+        <div class="col-md-6 text-center">
+          <h5>Original</h5>
+          <div id="originalPreview" class="mb-3"></div>
+        </div>
+        <div class="col-md-6 text-center">
+          <h5>Resized</h5>
+          <div id="resizedPreview" class="mb-3"></div>
+        </div>
+      </div>
+
+      <!-- Image Size and Resize Algorithm Options -->
+      <div class="row mb-3">
+        <div class="col-md-6">
+          <label for="sizeSelector" class="form-label">Select Image Size</label>
+          <select class="form-select" id="sizeSelector">
+            <option value="16">16x16 (Recommended)</option>
+            <option value="32">32x32</option>
+          </select>
+        </div>
+        <div class="col-md-6">
+          <label for="resizeAlgorithm" class="form-label">Resize Algorithm</label>
+          <select class="form-select" id="resizeAlgorithm">
+            <option value="nearest">Nearest Neighbor</option>
+            <option value="bilinear">Bilinear</option>
+            <option value="bicubic">Bicubic</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Generate Paint Button -->
+      <div class="text-center mb-3">
+        <button class="btn btn-primary" id="generatePaint" disabled>
+          <i class="fas fa-paint-brush"></i> Generate Paint
+        </button>
+      </div>
+
+      <!-- Copy and Clear Buttons (initially hidden) -->
+      <div id="actionButtons" class="text-center mb-3" style="display: none;">
+        <button class="btn btn-success me-2" id="copyButton">
+          <i class="fas fa-copy"></i> Copy to Clipboard
+        </button>
+        <button class="btn btn-danger" id="clearButton">
+          <i class="fas fa-trash-alt"></i> Clear
+        </button>
+      </div>
+
+      <!-- Label Field for JS Array Output -->
+      <div class="mt-3">
+        <label for="outputLabel" class="form-label">Output:</label>
+        <pre id="outputLabel" class="border p-3" style="max-height: 300px; overflow: auto;"></pre>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tutorial Modal -->
+<div id="tutorialModal" class="modal fade" tabindex="-1" aria-labelledby="tutorialModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tutorialModalLabel">Painter Gen Tutorial</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+              <div class="modal-body" style="max-height: 80vh; overflow-y: auto; padding: 5px;">
+                  <span style="color: red;"><strong>Reminder: </strong>This website doesn't save the images you uploaded.</span>
+                  <h3>How to use?</h3>
+                  <ol>
+                      <li>Click "Upload Image" to select an image.</li>
+                      <li>You can adjust the image size and the algorithm to be use. The bigger the image size the higher the performance impact while ingame.</li>
+                      <li>Click "Generate Paint" to process the image.</li>
+                      <li>The resized image and a JavaScript array will be displayed.</li>
+                      <li>You can copy the output using the "Copy to Clipboard" button.</li>
+                      <li>Use "Clear" to reset everything.</li>
+                  </ol>
+                  <h3>Adding the custom paint in-game?</h3>
+                  <h4>PC</h4>
+                  <ol>
+                      <li>Copy the output</li>
+                      <li>Open the addon folder (AppData\Local\packages\Minecraft Folder\LocalState\games\com.mojang\behavior_packs\Painter Behavior)</li>
+                      <li>Go to scripts folder and open listPaints.js</li>
+                      <li>
+                          Your code will look like this after you pasted it. Change the the function "yourUniquePaintName" to your own name.
+                          <img src="images/code_tutorial.png" alt="Tutorial" class="img-fluid">
+                      </li>
+                      <li>If you are in game run the reload command '/reload'</li>
+                  </ol>
+                  <h4>Mobile</h4>
+                  <ol>
+                      <li>Copy the output</li>
+                      <li>Extract the behavior pack from the .mcaddon file</li>
+                      <li>Go inside the behavior pack and go to scripts folder and open listPaints.js</li>
+                      <li>
+                          Your code will look like this after you pasted it. Change the function "yourUniquePaintName" to your own name.
+                          <img src="images/code_tutorial.png" alt="Tutorial" class="img-fluid">
+                      </li>
+                      <li>(Optional) Change manifest values if necessary.</li>
+                      <li>After editing the behavior pack, compress the behavior pack and name the extension .mcpack (spray paint behavior.mcpack)</li>
+                      <li>Put the addon in game</li>
+                  </ol>
+              </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Tutorial Modal -->
+  <div id="linksModal" class="modal fade" tabindex="-1" aria-labelledby="linksModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="tutorialModalLabel">Links</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+              <div class="modal-body" style="max-height: 80vh; overflow-y: auto; padding: 20px; text-align: center;">
+                <h2 class="mb-4">Addon Links</h2>
+                <div class="mb-4" onclick="window.open('https://www.curseforge.com/members/amon28/projects', '_blank')" style="cursor: pointer;">
+                  <h3 style="color: orangered; font-weight: bold;">Curseforge</h3>
+                  <img src="./images/curseforge-logo.webp" alt="Curseforge Logo" class="img-fluid rounded" style="max-width: 80%; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);">
+                </div>
+                <div onclick="window.open('https://mcpedl.com/user/amon28/', '_blank')" style="cursor: pointer;">
+                  <h3 style="color: green; font-weight: bold;">MCPEDL</h3>
+                  <img src="./images/mcpedl-logo.png" alt="MCPEDL Logo" class="img-fluid rounded" style="max-width: 60%; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);">
+                </div>
+                <hr class="my-4">
+                <h2 class="mb-4">Socials</h2>
+                  <div class="mb-4" onclick="window.open('https://x.com/Dewdimpple', '_blank')" style="cursor: pointer;">
+                    <h3 style="font-weight: bold;">Twitter/X</h3>
+                    <img src="./images/twitter-logo.png" alt="Twitter/X Logo" class="img-fluid rounded" style="max-width: 80%; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);">
+                  </div>
+              </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+  </div>
+
+  <script type="module" src="../javascript/painter_gen.js"></script>
+  <!-- Bootstrap JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Jquery -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+</body>
+</html>

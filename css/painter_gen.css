@@ -1,0 +1,36 @@
+.container-fluid {
+  position: fixed;
+  top: 10px;
+  left: 0;
+  display: flex;
+  flex-direction: column;
+  max-width: 150px;
+  z-index: 10;
+}
+
+#content-links-btn {
+  background-color: green;
+  border-color: green;
+}
+
+#donateBtn{
+  background-color: red;
+  border-color: red;
+}
+
+.fixed-btn {
+  max-height: 38px;
+  transition: opacity 0.3s ease;
+}
+
+/* When the screen width is 600px or smaller, change to horizontal layout */
+@media (max-width: 800px) {
+  .container-fluid {
+    flex-direction: row;
+    max-width: 100%;
+  }
+
+  .container-fluid button {
+    margin-right: 5px; /* Add spacing between buttons */
+  }
+}

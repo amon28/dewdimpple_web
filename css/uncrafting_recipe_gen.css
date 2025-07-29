@@ -42,12 +42,20 @@ body {
     height: auto;
     width: 120px;
     display: flex;
-    align-items: flex-start;
+    flex-direction: column;
+    align-items: center;
     justify-content: center;
-    background-color: #f8f9fa;
-    border-top-right-radius: 5px;
-    border-bottom-right-radius: 5px;
-    box-shadow: 2px 0 10px rgba(0,0,0,0.06);
+}
+
+.left-sidebar-items {
+    border-radius: 20px;
+    padding: 10px;
+    margin-bottom: 10px;
+    cursor: pointer;
+}
+
+.ls-item-home {
+    background-color: whitesmoke;
 }
 
 .sidebar {
