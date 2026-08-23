@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recipe Generator</title>
+    <link rel="icon" type="image/png" href="../images/favicon.png">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <link rel="stylesheet" href="../css/uncrafting_recipe_gen.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <!-- Google tag (gtag.js) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-6YJ56BSCQ2"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+
+        gtag('config', 'G-6YJ56BSCQ2');
+    </script>
+</head>
+<body>
+    <div class="left-sidebar-container">
+        <div class="left-sidebar-items ls-item-home" onclick="window.location.href='../index.html'">
+            <p><i class="fa-solid fa-house"></i> Home</p>
+        </div>
+        <div class="left-sidebar-items ls-item-kofi" onclick="window.open('https://ko-fi.com/dewdimpple', '_blank')">
+            <img src="../images/kofilogo.webp" alt="Kofi Logo" style="width: 20px; height: 20px; margin-right: 5px;">Tip Me
+        </div>
+    </div>
+    <div class="main-container">
+        <div class="container">
+            <h1>UnCrafting Recipe Generator</h1>
+            <p class="subtitle">Generate Recipe.js file for UnCrafting Table Addon. Create a zip using your recipe folder.</p> 
+            <div class="upload-area" id="uploadArea">
+                <span class="upload-icon">📁</span>
+                <div class="upload-text">Drop your recipes zip file here</div>
+                <div class="upload-subtext">or click to browse</div>
+                <input type="file" id="fileInput" accept=".zip" />
+            </div>
+
+            <div class="file-info" id="fileInfo">
+                <div class="file-name" id="fileName"></div>
+                <div class="file-size" id="fileSize"></div>
+            </div>
+
+            <div class="progress-bar" id="progressBar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+
+            <div class="status" id="status"></div>
+
+            <div style="display: flex; gap: 12px; justify-content: center; margin-bottom: 20px;">
+                <button class="btn" id="downloadRawBtn" onclick="downloadRawFile()">
+                    <i class="fa-solid fa-download"></i> Download Raw recipes.js
+                </button>
+                <button class="btn" id="processBtn" onclick="processFile()" disabled>
+                    <i class="fa-solid fa-rotate"></i> Generate Recipes
+                </button>
+            </div>
+
+            <button class="btn" id="downloadBtn" onclick="downloadFile()" style="display: none;">
+                <i class="fa-solid fa-download"></i> Download recipes.js
+            </button>
+       
+        </div>
+
+        <div class="sidebar" id="sidebar">
+            <h3><i class="fa-solid fa-gears"></i> Processing Results</h3>
+            
+            <div class="recipe-stats">
+                <div class="stat-item">
+                    <span class="stat-number success" id="successCount">0</span>
+                    <div class="stat-label">Added</div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number warning" id="warningCount">0</span>
+                    <div class="stat-label">Skipped</div>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-number error" id="errorCount">0</span>
+                    <div class="stat-label">Errors</div>
+                </div>
+            </div>
+
+            <div class="recipe-list" id="recipeList">
+                <!-- Recipe items will be dynamically added here -->
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="../javascript/uncrafting_recipe_gen.js"></script>
+</body>
+</html>

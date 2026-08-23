@@ -1,0 +1,9 @@
+# Permanent redirects from the old page locations to the new ones.
+# Only takes effect on Apache servers (most shared hosting, cPanel, etc.).
+# On other static hosts (GitHub Pages, Netlify, Vercel), the HTML redirect
+# stubs in /html/ handle the job instead.
+
+Redirect 301 /html/painter_gen.html /painter_gen/
+Redirect 301 /html/uncrafting_recipe_gen.html /uncrafting_recipe_gen/
+Redirect 301 /html/model-viewer/ /model_viewer/
+Redirect 301 /html/model-viewer/index.html /model_viewer/

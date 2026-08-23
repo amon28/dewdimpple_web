@@ -3,92 +3,161 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Addon Hub</title>
-    <link rel="icon" type="image/png" href="../images/favicon.png">
+    <title>Dewdimpple — Minecraft Addon Hub</title>
+    <meta name="description" content="Dewdimpple's hub for Minecraft Bedrock addons and tools: Painter Gen, UnCrafting Recipe Generator, and more.">
+    <meta name="theme-color" content="#0a0e1a">
+    <link rel="icon" type="image/png" href="./images/favicon.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./css/index.css">
 </head>
 <body>
-    <div class="construction">
-        <h1>This page is currently under construction.</h1>
-    </div>
-    <div class="pixel-decoration"></div>
-    <div class="container" >
-        <header class="header">
-            <h1>⚡ Your Addon Hub ⚡</h1>
-            <p>Crafting amazing Minecraft experiences, one block at a time!</p>
+    <!-- Ambient background -->
+    <div class="bg-glow bg-glow-1" aria-hidden="true"></div>
+    <div class="bg-glow bg-glow-2" aria-hidden="true"></div>
+    <div class="bg-grid" aria-hidden="true"></div>
+
+    <nav class="nav">
+        <div class="nav-inner">
+            <a class="brand" href="./index.html">
+                <span class="brand-mark">⛏</span>
+                <span class="brand-text">dewdimpple</span>
+            </a>
+            <div class="nav-links">
+                <a href="#tools">Tools</a>
+                <a href="#findme">Find Me</a>
+                <a href="https://ko-fi.com/dewdimpple" target="_blank" rel="noopener" class="nav-cta">
+                    <img src="./images/kofilogo.webp" alt="" class="platform-logo"> Support
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <!-- Hero -->
+        <header class="hero" data-reveal>
+            <div class="hero-badge">
+                <span class="dot"></span> Minecraft Bedrock · Addons &amp; Tools
+            </div>
+            <h1 class="hero-title">
+                Crafting the blocky world,<br>
+                <span class="gradient-text">one addon at a time.</span>
+            </h1>
+            <p class="hero-sub">
+                Hi, I'm <strong>Dewdimpple</strong>. I build addons, tools, and
+                utilities for Minecraft Bedrock — and I keep all my work right here.
+            </p>
+            <div class="hero-actions">
+                <a href="#tools" class="btn btn-primary">Explore Tools ↓</a>
+                <a href="https://www.curseforge.com/members/amon28/projects" target="_blank" rel="noopener" class="btn btn-ghost">View Addons</a>
+            </div>
         </header>
-        
-        <div class="grid">
-            <div class="card">
-                <h2>📖 About Me</h2>
-                <p>Welcome to my creative corner! I'm passionate about enhancing the Minecraft experience through innovative addons and modifications. With years of experience in addon development, I bring unique gameplay mechanics and features to the blocky world we all love.</p>
-                <a href="#" class="btn">Learn More</a>
+
+        <!-- Tools -->
+        <section id="tools" class="section">
+            <h2 class="section-title" data-reveal><span class="section-tag">Tools</span> My Pages</h2>
+            <div class="tools-grid">
+                <a class="tool-card" href="./painter_gen/" target="_blank" rel="noopener" data-reveal>
+                    <div class="tool-icon tool-icon-paint">🎨</div>
+                    <h3>Painter Gen</h3>
+                    <p>Generate painter scripts from images for Minecraft Bedrock. Drop in a picture and get the code to recreate it in-game.</p>
+                    <span class="tool-link">Open tool <span class="arrow">→</span></span>
+                </a>
+                <a class="tool-card" href="./uncrafting_recipe_gen/" target="_blank" rel="noopener" data-reveal style="--delay: 90ms">
+                    <div class="tool-icon tool-icon-pick">⛏️</div>
+                    <h3>UnCrafting Recipe Generator</h3>
+                    <p>Drop in your recipe zip file and generate a Recipe.js file for the UnCrafting Table addon, ready to use.</p>
+                    <span class="tool-link">Open tool <span class="arrow">→</span></span>
+                </a>
+                <a class="tool-card" href="./model_viewer/" target="_blank" rel="noopener" data-reveal style="--delay: 180ms">
+                    <div class="tool-icon tool-icon-cube">🧊</div>
+                    <h3>Bedrock Model Viewer</h3>
+                    <p>Inspect and view 3D models right in the browser — a handy companion for addon artists and modelers.</p>
+                    <span class="tool-link">Open viewer <span class="arrow">→</span></span>
+                </a>
             </div>
-            
-            <div class="card">
-                <h2>⚒️ My Addons</h2>
-                <p>Discover my collection of carefully crafted Minecraft addons! From game-changing mechanics to quality-of-life improvements, each addon is designed to enhance your gameplay experience while maintaining the core Minecraft feel.</p>
-                <a href="#" class="btn">Browse Addons</a>
+        </section>
+
+        <!-- Find me -->
+        <section id="findme" class="section">
+            <h2 class="section-title" data-reveal><span class="section-tag">Community</span> Find Me</h2>
+            <div class="findme-grid">
+                <a class="findme-card" href="https://www.curseforge.com/members/amon28/projects" target="_blank" rel="noopener" data-reveal>
+                    <img src="./images/curseforge-logo.webp" alt="CurseForge" class="platform-logo lg">
+                    <div>
+                        <h3>CurseForge</h3>
+                        <p>All my published addons</p>
+                    </div>
+                    <span class="arrow">→</span>
+                </a>
+                <a class="findme-card" href="https://mcpedl.com/user/amon28/" target="_blank" rel="noopener" data-reveal style="--delay: 90ms">
+                    <img src="./images/mcpedl-logo.png" alt="MCPEDL" class="platform-logo lg">
+                    <div>
+                        <h3>MCPEDL</h3>
+                        <p>Downloads &amp; previews</p>
+                    </div>
+                    <span class="arrow">→</span>
+                </a>
+                <a class="findme-card" href="https://x.com/Dewdimpple" target="_blank" rel="noopener" data-reveal style="--delay: 180ms">
+                    <img src="./images/twitter-logo.png" alt="X" class="platform-logo lg">
+                    <div>
+                        <h3>X / Twitter</h3>
+                        <p>Updates &amp; behind the scenes</p>
+                    </div>
+                    <span class="arrow">→</span>
+                </a>
+                <a class="findme-card" href="https://ko-fi.com/dewdimpple" target="_blank" rel="noopener" data-reveal style="--delay: 270ms">
+                    <img src="./images/kofilogo.webp" alt="Ko-fi" class="platform-logo lg">
+                    <div>
+                        <h3>Ko-fi</h3>
+                        <p>Buy me a coffee ☕</p>
+                    </div>
+                    <span class="arrow">→</span>
+                </a>
             </div>
-            
-            <div class="card">
-                <h2>📚 Tutorials</h2>
-                <p>Learn how to install, configure, and get the most out of my addons. Step-by-step guides, troubleshooting tips, and advanced configuration options to help you customize your Minecraft experience exactly how you want it.</p>
-                <a href="#" class="btn">View Guides</a>
-            </div>
-            
-            <div class="card">
-                <h2>🛠️ Development Blog</h2>
-                <p>Follow my development journey! Get behind-the-scenes insights into addon creation, upcoming features, development challenges, and sneak peeks at what's coming next in the world of Minecraft modding.</p>
-                <a href="#" class="btn">Read Blog</a>
-            </div>
-            
-            <div class="card">
-                <h2>💬 Community</h2>
-                <p>Join our growing community of Minecraft enthusiasts! Share your experiences, get help with installations, suggest new features, and connect with other players who love enhanced Minecraft gameplay.</p>
-                <a href="#" class="btn">Join Community</a>
-            </div>
-            
-            <div class="card">
-                <h2>📞 Support</h2>
-                <p>Need help with any of my addons? Having technical issues or questions about compatibility? Check out the support section for FAQs, bug reports, and direct assistance to get you back to crafting!</p>
-                <a href="#" class="btn">Get Support</a>
-            </div>
-        </div>
-        
-        <div class="links-section">
-            <h2>🔗 Quick Links</h2>
-            <div class="links-grid">
-                <div class="link-item">
-                    <a href="#">🎮 Download Hub</a>
-                </div>
-                <div class="link-item">
-                    <a href="#">📋 Documentation</a>
-                </div>
-                <div class="link-item">
-                    <a href="#">🐛 Bug Reports</a>
-                </div>
-                <div class="link-item">
-                    <a href="#">💡 Feature Requests</a>
-                </div>
-                <div class="link-item">
-                    <a href="#">🎥 Video Demos</a>
-                </div>
-                <div class="link-item">
-                    <a href="#">📊 Addon Stats</a>
-                </div>
-                <div class="link-item">
-                    <a href="#">🏆 Showcase</a>
-                </div>
-                <div class="link-item">
-                    <a href="#">📧 Contact</a>
-                </div>
-            </div>
-        </div>
-        
-        <footer class="footer">
-            <p>© 2025 Your Addon Hub | Crafted with ❤️ for the Minecraft Community</p>
+        </section>
+
+        <footer class="footer" data-reveal>
+            <p>© 2025 Dewdimpple · Crafted with ❤️ for the Minecraft community</p>
         </footer>
-    </div>
+    </main>
+
+    <script>
+        // Staggered entrance animations
+        const observer = new IntersectionObserver((entries) => {
+            for (const entry of entries) {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('revealed');
+                    observer.unobserve(entry.target);
+                }
+            }
+        }, { threshold: 0.15 });
+
+        document.querySelectorAll('[data-reveal]').forEach((el) => {
+            el.style.setProperty('--delay', el.style.getPropertyValue('--delay') || '0ms');
+            observer.observe(el);
+        });
+
+        // Cursor-follow glow on tool cards
+        document.querySelectorAll('.tool-card').forEach((card) => {
+            card.addEventListener('pointermove', (e) => {
+                const rect = card.getBoundingClientRect();
+                card.style.setProperty('--mx', (e.clientX - rect.left) + 'px');
+                card.style.setProperty('--my', (e.clientY - rect.top) + 'px');
+            });
+        });
+
+        // Smooth anchor scrolling
+        document.querySelectorAll('a[href^="#"]').forEach((a) => {
+            a.addEventListener('click', (e) => {
+                const target = document.querySelector(a.getAttribute('href'));
+                if (target) {
+                    e.preventDefault();
+                    target.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+    </script>
 </body>
 </html>
