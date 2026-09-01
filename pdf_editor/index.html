@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>PDF Studio — Edit, Sign &amp; Annotate</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect width='24' height='24' rx='5' fill='%234f46e5'/%3E%3Cpath d='M7 8h10M7 12h10M7 16h6' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- ===================== TOP BAR ===================== -->
+  <header id="topbar">
+    <div class="brand">
+      <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><rect width="24" height="24" rx="5" fill="#4f46e5"/><path d="M7 8h10M7 12h10M7 16h6" stroke="#fff" stroke-width="2" stroke-linecap="round"/></svg>
+      <span>PDF&nbsp;Studio</span>
+    </div>
+    <button id="btnMenu" class="tb-btn icon mobile-only" title="Menu" aria-label="Menu">
+      <svg viewBox="0 0 24 24" data-icon="menu"></svg>
+    </button>
+    <div class="tb-sep"></div>
+    <button id="btnOpen" class="tb-btn" title="Open PDF (Ctrl+O)" aria-label="Open PDF">
+      <svg viewBox="0 0 24 24" data-icon="open"></svg>
+      <span>Open</span>
+    </button>
+    <div id="fileName" class="filename">No document loaded</div>
+    <div class="spacer"></div>
+
+    <div class="tb-group" role="group" aria-label="Undo and redo">
+      <button id="btnUndo" class="tb-btn icon" title="Undo (Ctrl+Z)" aria-label="Undo" disabled>
+        <svg viewBox="0 0 24 24" data-icon="undo"></svg>
+      </button>
+      <button id="btnRedo" class="tb-btn icon" title="Redo (Ctrl+Shift+Z)" aria-label="Redo" disabled>
+        <svg viewBox="0 0 24 24" data-icon="redo"></svg>
+      </button>
+    </div>
+    <div class="tb-sep"></div>
+
+    <div class="tb-group" role="group" aria-label="Page navigation">
+      <button id="btnPrevPage" class="tb-btn icon" title="Previous page" aria-label="Previous page" disabled>
+        <svg viewBox="0 0 24 24" data-icon="chev-left"></svg>
+      </button>
+      <input id="pageInput" type="number" min="1" value="1" aria-label="Current page">
+      <span id="pageCountLabel">/ 0</span>
+      <button id="btnNextPage" class="tb-btn icon" title="Next page" aria-label="Next page" disabled>
+        <svg viewBox="0 0 24 24" data-icon="chev-right"></svg>
+      </button>
+    </div>
+    <div class="tb-sep"></div>
+
+    <div class="tb-group" role="group" aria-label="Zoom">
+      <button id="btnZoomOut" class="tb-btn icon" title="Zoom out" aria-label="Zoom out" disabled>
+        <svg viewBox="0 0 24 24" data-icon="minus"></svg>
+      </button>
+      <select id="zoomSelect" aria-label="Zoom level">
+        <option value="fit-width">Fit width</option>
+        <option value="fit-page">Fit page</option>
+        <option value="25">25%</option>
+        <option value="50">50%</option>
+        <option value="75">75%</option>
+        <option value="100">100%</option>
+        <option value="125">125%</option>
+        <option value="150">150%</option>
+        <option value="200">200%</option>
+        <option value="300">300%</option>
+        <option value="400">400%</option>
+      </select>
+      <button id="btnZoomIn" class="tb-btn icon" title="Zoom in" aria-label="Zoom in" disabled>
+        <svg viewBox="0 0 24 24" data-icon="plus"></svg>
+      </button>
+    </div>
+    <div class="tb-sep"></div>
+
+    <button id="btnSave" class="tb-btn primary" title="Save PDF with changes (Ctrl+S)">
+      <svg viewBox="0 0 24 24" data-icon="save"></svg>
+      <span id="saveLabel">Save PDF</span>
+    </button>
+  </header>
+
+  <!-- mobile menu dropdown -->
+  <div id="menuDropdown" class="menu-dropdown mobile-only hidden">
+    <button data-act="open"><svg viewBox="0 0 24 24" data-icon="open"></svg> Open PDF</button>
+    <button data-act="undo"><svg viewBox="0 0 24 24" data-icon="undo"></svg> Undo</button>
+    <button data-act="redo"><svg viewBox="0 0 24 24" data-icon="redo"></svg> Redo</button>
+    <div class="menu-sep"></div>
+    <button data-act="pages"><svg viewBox="0 0 24 24" data-icon="pages"></svg> Pages</button>
+    <button data-act="props"><svg viewBox="0 0 24 24" data-icon="sliders"></svg> Properties</button>
+    <div class="menu-sep"></div>
+    <button data-act="zoomin"><svg viewBox="0 0 24 24" data-icon="plus"></svg> Zoom in</button>
+    <button data-act="zoomout"><svg viewBox="0 0 24 24" data-icon="minus"></svg> Zoom out</button>
+    <button data-act="fitwidth"><svg viewBox="0 0 24 24" data-icon="fit"></svg> Fit width</button>
+  </div>
+
+  <!-- ===================== WORKSPACE ===================== -->
+  <main id="workspace">
+
+    <!-- Tool rail -->
+    <nav id="toolrail" aria-label="Tools">
+      <div class="rail-section">
+        <button class="tool-btn active" data-tool="select" title="Select / move (V)" aria-label="Select tool">
+          <svg viewBox="0 0 24 24" data-icon="cursor"></svg>
+        </button>
+        <button class="tool-btn" data-tool="pan" title="Pan the page (H)" aria-label="Pan tool">
+          <svg viewBox="0 0 24 24" data-icon="pan"></svg>
+        </button>
+      </div>
+      <div class="rail-section">
+        <button class="tool-btn" data-tool="text" title="Add text box (T)" aria-label="Text tool">
+          <svg viewBox="0 0 24 24" data-icon="text"></svg>
+        </button>
+        <button class="tool-btn" data-tool="image" title="Insert image" aria-label="Image tool">
+          <svg viewBox="0 0 24 24" data-icon="image"></svg>
+        </button>
+        <button class="tool-btn" data-tool="signature" title="Add signature" aria-label="Signature tool">
+          <svg viewBox="0 0 24 24" data-icon="signature"></svg>
+        </button>
+      </div>
+      <div class="rail-section">
+        <button class="tool-btn" data-tool="pen" title="Freehand pen (P)" aria-label="Pen tool">
+          <svg viewBox="0 0 24 24" data-icon="pen"></svg>
+        </button>
+        <button class="tool-btn" data-tool="highlighter" title="Highlighter (Y)" aria-label="Highlighter tool">
+          <svg viewBox="0 0 24 24" data-icon="highlighter"></svg>
+        </button>
+      </div>
+      <div class="rail-section">
+        <button class="tool-btn" data-tool="rect" title="Rectangle (R)" aria-label="Rectangle tool">
+          <svg viewBox="0 0 24 24" data-icon="rect"></svg>
+        </button>
+        <button class="tool-btn" data-tool="ellipse" title="Ellipse (O)" aria-label="Ellipse tool">
+          <svg viewBox="0 0 24 24" data-icon="circle"></svg>
+        </button>
+        <button class="tool-btn" data-tool="line" title="Line (L)" aria-label="Line tool">
+          <svg viewBox="0 0 24 24" data-icon="line"></svg>
+        </button>
+        <button class="tool-btn" data-tool="arrow" title="Arrow (A)" aria-label="Arrow tool">
+          <svg viewBox="0 0 24 24" data-icon="arrow"></svg>
+        </button>
+      </div>
+    </nav>
+
+    <!-- Thumbnails -->
+    <aside id="thumbsPanel">
+      <div class="panel-head">
+        <span>Pages</span>
+        <div class="panel-actions">
+          <button id="btnAddPage" class="mini-btn" title="Add a blank page at the end" aria-label="Add page">
+            <svg viewBox="0 0 24 24" data-icon="plus"></svg>
+          </button>
+          <button id="btnDelPage" class="mini-btn" title="Delete current page" aria-label="Delete page">
+            <svg viewBox="0 0 24 24" data-icon="trash"></svg>
+          </button>
+        </div>
+      </div>
+      <div id="thumbList"></div>
+    </aside>
+
+    <!-- Stage -->
+    <section id="stage">
+      <div id="emptyState">
+        <div class="empty-card">
+          <div class="empty-icon">
+            <svg viewBox="0 0 24 24" data-icon="pdf"></svg>
+          </div>
+          <h2>Drop a PDF to start editing</h2>
+          <p>Import a document, then annotate it with text, images, shapes,<br>freehand notes and signatures — and save everything back to PDF.</p>
+          <button id="btnOpenEmpty" class="btn primary lg">Choose a PDF file</button>
+          <div class="empty-hints">
+            <span>Ctrl+O open</span><span>Ctrl+S save</span><span>Ctrl+Z undo</span>
+          </div>
+        </div>
+      </div>
+      <div id="viewport" class="hidden">
+        <div id="sheetWrap">
+          <canvas id="pdfCanvas"></canvas>
+          <canvas id="overlayCanvas"></canvas>
+        </div>
+      </div>
+    </section>
+
+    <!-- Properties -->
+    <aside id="propsPanel">
+      <div class="panel-head"><span>Properties</span></div>
+      <div id="propsBody">
+
+        <!-- Nothing selected -->
+        <div id="propsEmpty" class="props-section">
+          <div class="prop-empty">
+            <p>Select an item on the page to edit its properties.</p>
+          </div>
+          <div class="docinfo" id="docInfo"></div>
+        </div>
+
+        <!-- Generic object -->
+        <div id="propsObject" class="props-section hidden">
+          <div class="prop-group">
+            <div class="prop-label">Position &amp; size</div>
+            <div class="grid4">
+              <label class="field"><span>X</span><input type="number" id="propX" step="0.1"></label>
+              <label class="field"><span>Y</span><input type="number" id="propY" step="0.1"></label>
+              <label class="field"><span>W</span><input type="number" id="propW" step="0.1"></label>
+              <label class="field"><span>H</span><input type="number" id="propH" step="0.1"></label>
+            </div>
+          </div>
+          <div class="prop-group">
+            <div class="prop-label">Rotation</div>
+            <input type="range" id="propRot" min="0" max="360" step="1" value="0">
+            <div class="range-row"><input type="number" id="propRotNum" min="0" max="360" step="1" value="0"><span>°</span></div>
+          </div>
+          <div class="prop-group">
+            <div class="prop-label">Opacity</div>
+            <input type="range" id="propOpacity" min="5" max="100" step="1" value="100">
+            <div class="range-row"><input type="number" id="propOpacityNum" min="5" max="100" value="100"><span>%</span></div>
+          </div>
+          <div class="prop-group">
+            <div class="prop-label">Layer</div>
+            <div class="btnrow">
+              <button class="mini-btn" id="propFront" title="Bring to front">
+                <svg viewBox="0 0 24 24" data-icon="tofront"></svg>
+              </button>
+              <button class="mini-btn" id="propBack" title="Send to back">
+                <svg viewBox="0 0 24 24" data-icon="toback"></svg>
+              </button>
+              <button class="mini-btn" id="propDuplicate" title="Duplicate (Ctrl+D)">
+                <svg viewBox="0 0 24 24" data-icon="copy"></svg>
+              </button>
+              <button class="mini-btn danger" id="propDelete" title="Delete (Del)">
+                <svg viewBox="0 0 24 24" data-icon="trash"></svg>
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Text -->
+        <div id="propsText" class="props-section hidden">
+          <div class="prop-group">
+            <div class="prop-label">Font</div>
+            <label class="field"><span>Family</span>
+              <select id="propFontFamily">
+                <option>Helvetica</option>
+                <option>Times</option>
+                <option>Courier</option>
+                <option>Roboto</option>
+                <option>Pacifico</option>
+              </select>
+            </label>
+            <label class="field"><span>Size</span><input type="number" id="propFontSize" min="4" max="400" step="0.5"></label>
+          </div>
+          <div class="prop-group">
+            <div class="prop-label">Style</div>
+            <div class="btnrow">
+              <button id="propBold" class="mini-btn style-btn" title="Bold (Ctrl+B)"><b>B</b></button>
+              <button id="propItalic" class="mini-btn style-btn" title="Italic (Ctrl+I)"><i>I</i></button>
+              <button id="propUnderline" class="mini-btn style-btn" title="Underline (Ctrl+U)"><u>U</u></button>
+            </div>
+            <div class="btnrow">
+              <button class="mini-btn align-btn active" data-align="left" title="Align left">≡</button>
+              <button class="mini-btn align-btn" data-align="center" title="Align center">☰</button>
+              <button class="mini-btn align-btn" data-align="right" title="Align right">⧉</button>
+              <button class="mini-btn align-btn" data-align="justify" title="Justify">☷</button>
+            </div>
+          </div>
+          <div class="prop-group">
+            <div class="prop-label">Color</div>
+            <label class="color-field">
+              <input type="color" id="propTextColor" value="#1f2430">
+              <span id="propTextColorHex">#1f2430</span>
+            </label>
+          </div>
+        </div>
+
+        <!-- Shape -->
+        <div id="propsShape" class="props-section hidden">
+          <div class="prop-group">
+            <div class="prop-label">Fill</div>
+            <label class="color-field">
+              <input type="color" id="propFill" value="#4f46e5">
+              <span id="propFillHex">#4f46e5</span>
+            </label>
+          </div>
+          <div class="prop-group">
+            <div class="prop-label">Stroke</div>
+            <label class="color-field">
+              <input type="color" id="propStroke" value="#4f46e5">
+              <span id="propStrokeHex">#4f46e5</span>
+            </label>
+            <label class="field"><span>Width</span><input type="number" id="propStrokeWidth" min="0" max="60" step="0.5" value="2"></label>
+          </div>
+          <div id="propCornerRow" class="prop-group hidden">
+            <div class="prop-label">Corner radius</div>
+            <input type="range" id="propCornerRadius" min="0" max="80" value="0">
+          </div>
+        </div>
+
+        <!-- Ink / pen -->
+        <div id="propsInk" class="props-section hidden">
+          <div class="prop-group">
+            <div class="prop-label">Ink color</div>
+            <label class="color-field">
+              <input type="color" id="propInkColor" value="#1f2430">
+              <span id="propInkColorHex">#1f2430</span>
+            </label>
+          </div>
+          <div class="prop-group">
+            <div class="prop-label">Pen size</div>
+            <input type="range" id="propInkWidth" min="1" max="20" step="0.5" value="3">
+            <div class="range-row"><input type="number" id="propInkWidthNum" min="1" max="20" step="0.5" value="3"><span>px</span></div>
+          </div>
+        </div>
+
+        <!-- Highlight -->
+        <div id="propsHighlight" class="props-section hidden">
+          <div class="prop-group">
+            <div class="prop-label">Marker color</div>
+            <div class="swatches" id="propHlSwatches">
+              <button class="swatch" style="--c:#fde047" data-c="#fde047" aria-label="Yellow"></button>
+              <button class="swatch" style="--c:#86efac" data-c="#86efac" aria-label="Green"></button>
+              <button class="swatch" style="--c:#7dd3fc" data-c="#7dd3fc" aria-label="Cyan"></button>
+              <button class="swatch" style="--c:#f9a8d4" data-c="#f9a8d4" aria-label="Pink"></button>
+              <button class="swatch" style="--c:#fdba74" data-c="#fdba74" aria-label="Orange"></button>
+              <button class="swatch" style="--c:#c4b5fd" data-c="#c4b5fd" aria-label="Purple"></button>
+            </div>
+          </div>
+          <div class="prop-group">
+            <div class="prop-label">Marker strength</div>
+            <input type="range" id="propHlOpacity" min="10" max="80" step="5" value="40">
+            <div class="range-row"><input type="number" id="propHlOpacityNum" min="10" max="80" step="5" value="40"><span>%</span></div>
+          </div>
+        </div>
+
+      </div>
+    </aside>
+  </main>
+
+  <!-- ===================== STATUS BAR ===================== -->
+  <footer id="statusbar">
+    <span id="statusLeft">Open a PDF to get started</span>
+    <span id="statusRight"></span>
+  </footer>
+</div>
+
+<!-- ===================== MOBILE DRAWER BACKDROP ===================== -->
+<div id="drawerBackdrop" class="drawer-backdrop hidden"></div>
+
+<!-- ===================== DRAG OVERLAY ===================== -->
+<div id="dropOverlay" class="hidden">
+  <div class="drop-card">
+    <svg viewBox="0 0 24 24" data-icon="pdf"></svg>
+    <span id="dropLabel">Drop your PDF here</span>
+  </div>
+</div>
+
+<!-- ===================== SIGNATURE MODAL ===================== -->
+<div id="sigModal" class="modal-backdrop hidden">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Add your signature</h3>
+      <button class="modal-close" data-close title="Close" aria-label="Close">×</button>
+    </div>
+    <div class="sig-tabs">
+      <button class="sig-tab active" data-tab="draw">✍️ Draw</button>
+      <button class="sig-tab" data-tab="type">Type</button>
+      <button class="sig-tab" data-tab="upload">Upload</button>
+    </div>
+
+    <div class="sig-pane" data-pane="draw">
+      <canvas id="sigCanvas"></canvas>
+      <div class="sig-controls">
+        <div class="sig-swatches" id="sigSwatches">
+          <button class="swatch active" style="--c:#111827" data-c="#111827" aria-label="Black"></button>
+          <button class="swatch" style="--c:#1d4ed8" data-c="#1d4ed8" aria-label="Blue"></button>
+          <button class="swatch" style="--c:#b91c1c" data-c="#b91c1c" aria-label="Red"></button>
+          <button class="swatch" style="--c:#111827" data-c="#111827" aria-label="Dark gray" data-extra="yes"></button>
+        </div>
+        <label class="sig-width">Width
+          <input type="range" id="sigWidth" min="1" max="10" step="0.5" value="3">
+        </label>
+        <div class="sig-actions">
+          <button class="mini-btn" id="sigUndo" title="Undo last stroke">Undo</button>
+          <button class="mini-btn" id="sigClear" title="Clear all">Clear</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sig-pane hidden" data-pane="type">
+      <input id="sigTypeInput" class="sig-type-input" placeholder="Type your name here…" maxlength="60">
+      <canvas id="sigTypeCanvas" class="sig-type-canvas"></canvas>
+      <div class="sig-controls">
+        <div class="sig-swatches" id="sigTypeSwatches">
+          <button class="swatch active" style="--c:#111827" data-c="#111827" aria-label="Black"></button>
+          <button class="swatch" style="--c:#1d4ed8" data-c="#1d4ed8" aria-label="Blue"></button>
+          <button class="swatch" style="--c:#b91c1c" data-c="#b91c1c" aria-label="Red"></button>
+        </div>
+        <div class="sig-actions">
+          <button class="mini-btn" id="sigTypeClear">Clear</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="sig-pane hidden" data-pane="upload">
+      <div class="sig-drop" id="sigDrop">
+        <svg viewBox="0 0 24 24" data-icon="upload"></svg>
+        <p>Drop an image here or</p>
+        <button class="btn ghost sm" id="sigBrowse">Browse files</button>
+        <p class="sig-note">PNG with transparency works best</p>
+      </div>
+      <div id="sigUploadWrap" class="hidden">
+        <img id="sigUploadPreview" alt="Signature preview">
+        <button class="btn ghost sm" id="sigReplace">Replace image</button>
+      </div>
+    </div>
+
+    <div class="modal-foot">
+      <button class="btn ghost" data-close>Cancel</button>
+      <button class="btn primary" id="sigOk">Use signature</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== CONTEXT MENU ===================== -->
+<div id="ctxMenu" class="ctx-menu hidden">
+  <button data-act="front">Bring to front</button>
+  <button data-act="back">Send to back</button>
+  <button data-act="dup">Duplicate</button>
+  <button data-act="del" class="danger">Delete</button>
+</div>
+
+<!-- ===================== TOASTS ===================== -->
+<div id="toastRoot" aria-live="polite"></div>
+
+<!-- hidden file inputs -->
+<input type="file" id="fileInput" accept="application/pdf,.pdf" hidden>
+<input type="file" id="imageInput" accept="image/png,image/jpeg,image/webp,image/gif,image/svg+xml" hidden>
+<input type="file" id="sigImageInput" accept="image/png,image/jpeg,image/webp" hidden>
+
+<!-- ===================== SCRIPTS ===================== -->
+<script src="libs/pdf.min.js"></script>
+<script src="libs/pdf-lib.min.js"></script>
+<script src="libs/fontkit.umd.min.js"></script>
+<script src="libs/fabric.min.js"></script>
+<script src="fonts.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
