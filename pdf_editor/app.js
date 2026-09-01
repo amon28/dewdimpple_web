@@ -1775,6 +1775,10 @@ window.addEventListener('resize', () => {
   clearTimeout(resizeTimer);
   resizeTimer = setTimeout(() => {
     if (!state.pdfDoc) return;
+    // The soft keyboard opening resizes the viewport. Re-rendering while a text
+    // box is being edited would rebuild the canvas, destroy the edit session and
+    // dismiss the keyboard — so skip it until the user finishes typing.
+    if (fc.getObjects().some((o) => o.isEditing)) return;
     if (state.zoomMode === 'fit-width' || state.zoomMode === 'fit-page') fitZoom(state.zoomMode);
     else renderCurrentPage();
   }, 150);
