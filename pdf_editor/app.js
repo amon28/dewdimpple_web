@@ -1555,44 +1555,92 @@ stage.addEventListener('pointerup', () => { panState = null; });
 stage.addEventListener('pointercancel', () => { panState = null; });
 
 /* pinch-to-zoom (touch): two fingers change zoom and pan the stage together,
-   like a native photo/map viewer. Runs on the capture phase so it takes
-   priority over fabric's own pointer handling and the pan-tool drag above —
-   works no matter which tool is active. The first finger's own down/move/up
-   events are left alone until a second finger joins; only then do we start
-   swallowing events, so whatever the first finger was doing (draw/select/pan)
-   simply freezes during the pinch and finalizes normally once it lifts. */
+   like a native photo/map viewer. During the gesture we only move a cheap CSS
+   transform on #sheetWrap (GPU compositing, no canvas repaint) so it stays
+   smooth; the real PDF re-render (which resizes/redraws the canvases and is
+   too slow to do every frame — that's what was causing the blinking/stutter)
+   only happens once, when the fingers lift. Runs on the capture phase so it
+   takes priority over fabric's own pointer handling and the pan-tool drag
+   above — works no matter which tool is active. The first finger's own
+   down/move/up events are left alone until a second finger joins; only then
+   do we start swallowing events, so whatever the first finger was doing
+   (draw/select/pan) simply freezes during the pinch and finalizes normally
+   once it lifts. */
 const pinchTouches = new Map(); // pointerId -> {x, y}
-let pinchState = null;
-let pinchRAF = null;
-let pinchPending = null;
+let pinchState = null; // set for the duration of an active 2-finger gesture
 
 function pinchDist(pts) { return Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y); }
 function pinchMid(pts) { return { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 }; }
 
-async function applyPinchZoom(z, midX, midY) {
-  if (!pinchState) return;
-  state.zoom = clamp(z, 0.12, 6);
-  state.zoomMode = 'custom';
-  await renderCurrentPage();
-  if (!pinchState) return; // pinch ended while the render was in flight
-  const rect = stage.getBoundingClientRect();
-  stage.scrollLeft = pinchState.anchorX * state.zoom - (midX - rect.left);
-  stage.scrollTop = pinchState.anchorY * state.zoom - (midY - rect.top);
+function beginPinch(pts) {
+  const wrapRect = sheetWrap.getBoundingClientRect();
+  const stageRect = stage.getBoundingClientRect();
+  const mid = pinchMid(pts);
+  pinchState = {
+    startDist: Math.max(1, pinchDist(pts)),
+    committedZoom: state.zoom,
+    minScale: 0.12 / state.zoom,
+    maxScale: 6 / state.zoom,
+    // page-content coordinates of the point under the fingers, used to
+    // reposition the scroll once we commit the real render at gesture end
+    anchorX: (stage.scrollLeft + (mid.x - stageRect.left)) / state.zoom,
+    anchorY: (stage.scrollTop + (mid.y - stageRect.top)) / state.zoom,
+    startMidX: mid.x,
+    startMidY: mid.y,
+    liveScale: 1,
+    liveMidX: mid.x,
+    liveMidY: mid.y,
+  };
+  // scale visually around the point under the fingers, in sheetWrap's own
+  // (untransformed) local coordinates
+  sheetWrap.style.transformOrigin = `${mid.x - wrapRect.left}px ${mid.y - wrapRect.top}px`;
+  sheetWrap.style.willChange = 'transform';
 }
 
-function schedulePinchZoom(z, midX, midY) {
-  pinchPending = { z, midX, midY };
+let pinchRAF = null;
+function updatePinch(pts) {
+  if (!pinchState) return;
+  const dist = pinchDist(pts);
+  if (dist >= 1) {
+    const mid = pinchMid(pts);
+    pinchState.liveScale = clamp(dist / pinchState.startDist, pinchState.minScale, pinchState.maxScale);
+    pinchState.liveMidX = mid.x;
+    pinchState.liveMidY = mid.y;
+  }
   if (pinchRAF) return;
   pinchRAF = requestAnimationFrame(() => {
     pinchRAF = null;
-    const p = pinchPending; pinchPending = null;
-    if (p) applyPinchZoom(p.z, p.midX, p.midY);
+    if (!pinchState) return;
+    const tx = pinchState.liveMidX - pinchState.startMidX;
+    const ty = pinchState.liveMidY - pinchState.startMidY;
+    // translate() is listed first so it applies in screen pixels *after* the
+    // scale — that keeps the transform-origin point tracking the live
+    // mid-point while everything else scales around it
+    sheetWrap.style.transform = `translate(${tx}px, ${ty}px) scale(${pinchState.liveScale})`;
   });
+}
+
+async function endPinch() {
+  if (!pinchState) return;
+  const p = pinchState;
+  pinchState = null;
+  if (pinchRAF) { cancelAnimationFrame(pinchRAF); pinchRAF = null; }
+  sheetWrap.style.transform = '';
+  sheetWrap.style.transformOrigin = '';
+  sheetWrap.style.willChange = '';
+  const newZoom = clamp(p.committedZoom * p.liveScale, 0.12, 6);
+  if (Math.abs(newZoom - state.zoom) < 0.001) return; // e.g. a two-finger tap
+  state.zoom = newZoom;
+  state.zoomMode = 'custom';
+  await renderCurrentPage();
+  const rect = stage.getBoundingClientRect();
+  stage.scrollLeft = p.anchorX * newZoom - (p.liveMidX - rect.left);
+  stage.scrollTop = p.anchorY * newZoom - (p.liveMidY - rect.top);
 }
 
 function endPinchTouch(e) {
   pinchTouches.delete(e.pointerId);
-  if (pinchTouches.size < 2) pinchState = null;
+  if (pinchTouches.size < 2) endPinch();
 }
 
 stage.addEventListener('pointerdown', (e) => {
@@ -1605,15 +1653,7 @@ stage.addEventListener('pointerdown', (e) => {
   panState = null;
   fc.discardActiveObject();
   fc.requestRenderAll();
-  const pts = Array.from(pinchTouches.values()).slice(0, 2);
-  const rect = stage.getBoundingClientRect();
-  const mid = pinchMid(pts);
-  pinchState = {
-    startDist: Math.max(1, pinchDist(pts)),
-    startZoom: state.zoom,
-    anchorX: (stage.scrollLeft + (mid.x - rect.left)) / state.zoom,
-    anchorY: (stage.scrollTop + (mid.y - rect.top)) / state.zoom,
-  };
+  beginPinch(Array.from(pinchTouches.values()).slice(0, 2));
 }, { capture: true, passive: false });
 
 stage.addEventListener('pointermove', (e) => {
@@ -1622,11 +1662,7 @@ stage.addEventListener('pointermove', (e) => {
   if (!pinchState || pinchTouches.size < 2) return;
   e.preventDefault();
   e.stopPropagation();
-  const pts = Array.from(pinchTouches.values()).slice(0, 2);
-  const dist = pinchDist(pts);
-  if (dist < 1) return;
-  const mid = pinchMid(pts);
-  schedulePinchZoom(pinchState.startZoom * (dist / pinchState.startDist), mid.x, mid.y);
+  updatePinch(Array.from(pinchTouches.values()).slice(0, 2));
 }, { capture: true, passive: false });
 
 stage.addEventListener('pointerup', endPinchTouch, { capture: true });
