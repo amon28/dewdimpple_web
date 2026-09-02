@@ -35,8 +35,8 @@ const ICONS = {
   minus: '<line x1="5" y1="12" x2="19" y2="12"/>',
   trash: '<polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>',
   copy: '<rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>',
-  tofront: '<polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><line x1="12" y1="7" x2="12" y2="22"/>',
-  toback: '<polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><line x1="12" y1="2" x2="12" y2="17"/>',
+  tofront: '<polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><line x1="12" y1="5" x2="12" y2="19"/><polyline points="8.5 8.5 12 5 15.5 8.5"/>',
+  toback: '<polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><line x1="12" y1="5" x2="12" y2="19"/><polyline points="8.5 15.5 12 19 15.5 15.5"/>',
   'chev-left': '<polyline points="15 18 9 12 15 6"/>',
   'chev-right': '<polyline points="9 18 15 12 9 6"/>',
   pdf: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/>',
@@ -457,6 +457,7 @@ function setTool(t) {
   fc.upperCanvasEl.style.cursor = fc.defaultCursor; // apply right away, not only after mouseenter
   stage.classList.toggle('panning', t === 'pan');
   setStatusHint(TOOL_HINTS[t] || '');
+  if (typeof updateSelBar === 'function') updateSelBar();
   if (t !== 'image' && t !== 'signature') state.pending = null;
   if (t === 'image') {
     if (!state.pdfDoc) { toast('Open a PDF first', 'error'); setTool('select'); return; }
@@ -1525,15 +1526,15 @@ fc.on('mouse:down', (e) => {
   if (state.tool === 'select' && e.target) capturePre();
 });
 fc.on('mouse:up', () => { state.livePushed = false; });
-fc.on('selection:created', () => refreshProps());
-fc.on('selection:updated', () => refreshProps());
-fc.on('selection:cleared', () => refreshProps());
-fc.on('object:modified', () => { syncPage(); commitPre(); refreshProps(); });
-fc.on('object:moving', () => { const o = fc.getActiveObjects()[0]; if (o) { $('propX').value = round1(o.left); $('propY').value = round1(o.top); } });
-fc.on('object:scaling', () => refreshProps());
-fc.on('object:rotating', () => refreshProps());
-fc.on('text:editing:entered', () => capturePre());
-fc.on('text:editing:exited', () => { syncPage(); commitPre(); refreshProps(); });
+fc.on('selection:created', () => { refreshProps(); updateSelBar(); });
+fc.on('selection:updated', () => { refreshProps(); updateSelBar(); });
+fc.on('selection:cleared', () => { refreshProps(); updateSelBar(); });
+fc.on('object:modified', () => { syncPage(); commitPre(); refreshProps(); updateSelBar(); });
+fc.on('object:moving', () => { const o = fc.getActiveObjects()[0]; if (o) { $('propX').value = round1(o.left); $('propY').value = round1(o.top); } updateSelBar(); });
+fc.on('object:scaling', () => { refreshProps(); updateSelBar(); });
+fc.on('object:rotating', () => { refreshProps(); updateSelBar(); });
+fc.on('text:editing:entered', () => { capturePre(); updateSelBar(); });
+fc.on('text:editing:exited', () => { syncPage(); commitPre(); refreshProps(); updateSelBar(); });
 // end a live slider gesture when a control commits its value
 $('propsBody').addEventListener('change', () => { state.livePushed = false; });
 
@@ -1552,6 +1553,88 @@ stage.addEventListener('pointermove', (e) => {
 });
 stage.addEventListener('pointerup', () => { panState = null; });
 stage.addEventListener('pointercancel', () => { panState = null; });
+
+/* pinch-to-zoom (touch): two fingers change zoom and pan the stage together,
+   like a native photo/map viewer. Runs on the capture phase so it takes
+   priority over fabric's own pointer handling and the pan-tool drag above —
+   works no matter which tool is active. The first finger's own down/move/up
+   events are left alone until a second finger joins; only then do we start
+   swallowing events, so whatever the first finger was doing (draw/select/pan)
+   simply freezes during the pinch and finalizes normally once it lifts. */
+const pinchTouches = new Map(); // pointerId -> {x, y}
+let pinchState = null;
+let pinchRAF = null;
+let pinchPending = null;
+
+function pinchDist(pts) { return Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y); }
+function pinchMid(pts) { return { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 }; }
+
+async function applyPinchZoom(z, midX, midY) {
+  if (!pinchState) return;
+  state.zoom = clamp(z, 0.12, 6);
+  state.zoomMode = 'custom';
+  await renderCurrentPage();
+  if (!pinchState) return; // pinch ended while the render was in flight
+  const rect = stage.getBoundingClientRect();
+  stage.scrollLeft = pinchState.anchorX * state.zoom - (midX - rect.left);
+  stage.scrollTop = pinchState.anchorY * state.zoom - (midY - rect.top);
+}
+
+function schedulePinchZoom(z, midX, midY) {
+  pinchPending = { z, midX, midY };
+  if (pinchRAF) return;
+  pinchRAF = requestAnimationFrame(() => {
+    pinchRAF = null;
+    const p = pinchPending; pinchPending = null;
+    if (p) applyPinchZoom(p.z, p.midX, p.midY);
+  });
+}
+
+function endPinchTouch(e) {
+  pinchTouches.delete(e.pointerId);
+  if (pinchTouches.size < 2) pinchState = null;
+}
+
+stage.addEventListener('pointerdown', (e) => {
+  if (e.pointerType !== 'touch' || !state.pdfDoc) return;
+  pinchTouches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (pinchTouches.size < 2) return;
+  e.preventDefault();
+  e.stopPropagation();
+  if (pinchState) return; // a third finger — keep pinching with the original two
+  panState = null;
+  fc.discardActiveObject();
+  fc.requestRenderAll();
+  const pts = Array.from(pinchTouches.values()).slice(0, 2);
+  const rect = stage.getBoundingClientRect();
+  const mid = pinchMid(pts);
+  pinchState = {
+    startDist: Math.max(1, pinchDist(pts)),
+    startZoom: state.zoom,
+    anchorX: (stage.scrollLeft + (mid.x - rect.left)) / state.zoom,
+    anchorY: (stage.scrollTop + (mid.y - rect.top)) / state.zoom,
+  };
+}, { capture: true, passive: false });
+
+stage.addEventListener('pointermove', (e) => {
+  if (!pinchTouches.has(e.pointerId)) return;
+  pinchTouches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (!pinchState || pinchTouches.size < 2) return;
+  e.preventDefault();
+  e.stopPropagation();
+  const pts = Array.from(pinchTouches.values()).slice(0, 2);
+  const dist = pinchDist(pts);
+  if (dist < 1) return;
+  const mid = pinchMid(pts);
+  schedulePinchZoom(pinchState.startZoom * (dist / pinchState.startDist), mid.x, mid.y);
+}, { capture: true, passive: false });
+
+stage.addEventListener('pointerup', endPinchTouch, { capture: true });
+stage.addEventListener('pointercancel', endPinchTouch, { capture: true });
+stage.addEventListener('pointerleave', endPinchTouch, { capture: true });
+
+// keep the floating selection toolbar anchored while the page scrolls
+stage.addEventListener('scroll', () => updateSelBar());
 
 /* ============================================================
    Mobile drawers (small screens: panels become slide-in overlays)
@@ -1592,6 +1675,54 @@ $('menuDropdown').addEventListener('click', (e) => {
 });
 document.addEventListener('click', (e) => {
   if (!e.target.closest('#menuDropdown') && !e.target.closest('#btnMenu')) hideMenu();
+});
+
+/* floating selection toolbar (mobile): delete / layers / duplicate above the selection */
+function updateSelBar() {
+  const bar = $('selBar');
+  if (!isMobile() || state.tool !== 'select' || state.loading) {
+    bar.classList.add('hidden');
+    return;
+  }
+  const active = fc.getActiveObject();
+  const objs = fc.getActiveObjects();
+  if (!active || !objs.length || objs.some((o) => o.isEditing)) {
+    bar.classList.add('hidden');
+    return;
+  }
+  // fabric's getCoords() returns the selection corners in canvas-element CSS
+  // pixels already (the viewport transform is included), so no zoom scaling here.
+  const coords = active.getCoords() || [];
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  for (const p of coords) {
+    if (p && typeof p.x === 'number') {
+      if (p.x < minX) minX = p.x;
+      if (p.x > maxX) maxX = p.x;
+      if (p.y < minY) minY = p.y;
+      if (p.y > maxY) maxY = p.y;
+    }
+  }
+  if (minX === Infinity) { bar.classList.add('hidden'); return; }
+  const cRect = fc.upperCanvasEl.getBoundingClientRect();
+  const cx = cRect.left + (minX + maxX) / 2;
+  const topEdge = cRect.top + minY;
+  const bottomEdge = cRect.top + maxY;
+  const barH = 46;
+  const gap = 10;
+  let top = topEdge - barH - gap;
+  if (top < 60) top = bottomEdge + gap;
+  bar.style.left = Math.round(cx) + 'px';
+  bar.style.top = Math.round(top) + 'px';
+  bar.classList.remove('hidden');
+}
+$('selBar').addEventListener('click', (e) => {
+  const btn = e.target.closest('button');
+  if (!btn) return;
+  if (btn.dataset.sel === 'del') deleteSelected();
+  else if (btn.dataset.sel === 'front') bringToFront();
+  else if (btn.dataset.sel === 'back') sendToBack();
+  else if (btn.dataset.sel === 'dup') duplicateSelected();
+  setTimeout(updateSelBar, 0);
 });
 $('drawerBackdrop').addEventListener('click', closeDrawers);
 // close drawers when interacting with the page itself
@@ -1781,6 +1912,7 @@ window.addEventListener('resize', () => {
     if (fc.getObjects().some((o) => o.isEditing)) return;
     if (state.zoomMode === 'fit-width' || state.zoomMode === 'fit-page') fitZoom(state.zoomMode);
     else renderCurrentPage();
+    updateSelBar();
   }, 150);
 });
 

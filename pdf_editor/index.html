@@ -47,7 +47,7 @@
         <svg viewBox="0 0 24 24" data-icon="chev-right"></svg>
       </button>
     </div>
-    <div class="tb-sep"></div>
+    <div class="tb-sep sep-zoom"></div>
 
     <div class="tb-group" role="group" aria-label="Zoom">
       <button id="btnZoomOut" class="tb-btn icon" title="Zoom out" aria-label="Zoom out" disabled>
@@ -70,7 +70,7 @@
         <svg viewBox="0 0 24 24" data-icon="plus"></svg>
       </button>
     </div>
-    <div class="tb-sep"></div>
+    <div class="tb-sep sep-zoom"></div>
 
     <button id="btnSave" class="tb-btn primary" title="Save PDF with changes (Ctrl+S)">
       <svg viewBox="0 0 24 24" data-icon="save"></svg>
@@ -419,6 +419,14 @@
 </div>
 
 <!-- ===================== CONTEXT MENU ===================== -->
+
+<!-- floating selection toolbar (mobile) -->
+<div id="selBar" class="sel-bar hidden">
+  <button data-sel="del" class="danger" title="Delete"><svg viewBox="0 0 24 24" data-icon="trash"></svg></button>
+  <button data-sel="front" title="Bring to front"><svg viewBox="0 0 24 24" data-icon="tofront"></svg></button>
+  <button data-sel="back" title="Send to back"><svg viewBox="0 0 24 24" data-icon="toback"></svg></button>
+  <button data-sel="dup" title="Duplicate"><svg viewBox="0 0 24 24" data-icon="copy"></svg></button>
+</div>
 <div id="ctxMenu" class="ctx-menu hidden">
   <button data-act="front">Bring to front</button>
   <button data-act="back">Send to back</button>

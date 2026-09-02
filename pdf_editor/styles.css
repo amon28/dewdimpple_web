@@ -652,6 +652,35 @@ input[type="range"] { width: 100%; accent-color: var(--accent); height: 22px; ma
 }
 .menu-dropdown button:hover, .menu-dropdown button:active { background: var(--accent-soft); color: var(--accent); }
 .menu-sep { height: 1px; background: var(--border); margin: 5px 8px; }
+
+/* floating selection toolbar (mobile) — delete / layer / duplicate over the selection */
+.sel-bar {
+  position: fixed;
+  display: none;
+  align-items: center;
+  gap: 2px;
+  background: #1f2430;
+  border-radius: 12px;
+  padding: 5px;
+  box-shadow: 0 6px 22px rgba(15,23,42,.35);
+  z-index: 80;
+  transform: translateX(-50%);
+}
+.sel-bar button {
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  border: none; background: transparent;
+  border-radius: 8px;
+  color: #fff;
+  cursor: pointer;
+}
+.sel-bar button svg {
+  width: 17px; height: 17px;
+  stroke: currentColor; fill: none;
+  stroke-width: 2; stroke-linecap: round; stroke-linejoin: round;
+}
+.sel-bar button:hover, .sel-bar button:active { background: rgba(255,255,255,.18); }
+.sel-bar button.danger:hover { background: var(--danger); }
 .drawer-backdrop {
   position: fixed; inset: 0;
   background: rgba(15,23,42,.45);
@@ -680,11 +709,15 @@ input[type="range"] { width: 100%; accent-color: var(--accent); height: 22px; ma
   .tb-btn.primary { width: 40px; height: 34px; padding: 0; }
   .tb-btn span { display: none; }
   /* secondary actions live in the burger menu */
-  #btnOpen, #btnRedo, #topbar .tb-group[aria-label="Zoom"] { display: none; }
+  #btnOpen, #topbar .tb-group[aria-label="Zoom"] { display: none; }
+  /* hide the separators that flanked the zoom group (avoids a stray “||” next to Save) */
+  .sep-zoom { display: none; }
   #pageInput { width: 40px; height: 28px; font-size: 12px; }
   #zoomSelect { display: none; }
   .tb-sep { margin: 0 2px; }
   .mobile-only { display: inline-flex; }
+  /* floating selection toolbar */
+  .sel-bar:not(.hidden) { display: flex; }
 
   /* ---- stage fills the remaining space ---- */
   #workspace { display: block; }
@@ -779,9 +812,9 @@ input[type="range"] { width: 100%; accent-color: var(--accent); height: 22px; ma
   /* ---- toasts sit above the bottom bar ---- */
   #toastRoot { bottom: 66px; }
 
-  /* very narrow: hide the page count label to fit */
+  /* very narrow: shrink controls, but keep the “/ N” page count visible */
   @media (max-width: 430px) {
-    #pageCountLabel { display: none; }
     .tb-btn { width: 30px; }
     .tb-btn.primary { width: 36px; }
-}
+    #pageInput { width: 34px; }
+  }
