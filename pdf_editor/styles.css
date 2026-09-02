@@ -239,6 +239,7 @@ input, select { font-family: inherit; font-size: 12.5px; }
   flex: 1 1 auto;
   position: relative;
   overflow: auto;
+  touch-action: none; /* we own all touch gestures here (pan tool + pinch-zoom) */
   background:
     radial-gradient(circle at 1px 1px, rgba(15,23,42,.05) 1px, transparent 0) 0 0 / 22px 22px,
     var(--bg);
@@ -249,12 +250,13 @@ input, select { font-family: inherit; font-size: 12.5px; }
 
 #viewport {
   min-width: 100%; min-height: 100%;
-  display: flex; justify-content: center; align-items: flex-start;
   padding: 34px;
   position: relative;
 }
 #sheetWrap {
   position: relative;
+  width: fit-content;
+  margin: 0 auto;
   box-shadow: 0 1px 4px rgba(15,23,42,.16), 0 10px 34px rgba(15,23,42,.18);
   border-radius: 2px;
   line-height: 0;
@@ -818,3 +820,4 @@ input[type="range"] { width: 100%; accent-color: var(--accent); height: 22px; ma
     .tb-btn.primary { width: 36px; }
     #pageInput { width: 34px; }
   }
+}
