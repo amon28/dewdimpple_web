@@ -1,22 +1,44 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" data-theme="night">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dewdimpple — Minecraft Addon Hub</title>
-    <meta name="description" content="Dewdimpple's hub for Minecraft Bedrock addons and tools: Painter Gen, UnCrafting Recipe Generator, and more.">
-    <meta name="theme-color" content="#0a0e1a">
+    <meta name="description" content="Dewdimpple's hub for Minecraft Bedrock addons and tools: Painter Gen, UnCrafting Recipe Generator, Bedrock Model Viewer and more.">
+    <meta name="theme-color" content="#0b1026">
+    <meta property="og:title" content="Dewdimpple — Minecraft Addon Hub">
+    <meta property="og:description" content="Addons, tools and utilities for Minecraft Bedrock, all crafted by Dewdimpple.">
+    <meta property="og:type" content="website">
     <link rel="icon" type="image/png" href="./images/favicon.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=VT323&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="./css/index.css">
 </head>
 <body>
-    <!-- Ambient background -->
-    <div class="bg-glow bg-glow-1" aria-hidden="true"></div>
-    <div class="bg-glow bg-glow-2" aria-hidden="true"></div>
-    <div class="bg-grid" aria-hidden="true"></div>
+    <!-- Sky + world backdrop -->
+    <div class="world" aria-hidden="true">
+        <div class="sky"></div>
+        <div class="stars"></div>
+        <div class="sun-moon"></div>
+        <div class="clouds">
+            <span class="cloud c1"></span>
+            <span class="cloud c2"></span>
+            <span class="cloud c3"></span>
+        </div>
+        <div class="skyline"></div>
+    </div>
+
+    <!-- Floating voxels -->
+    <div class="voxels" aria-hidden="true">
+        <div class="mc-block grass float-a" style="top:14%; left:6%;"></div>
+        <div class="mc-block diamond float-b" style="top:60%; left:3%;"></div>
+        <div class="mc-block gold float-c" style="top:20%; right:7%;"></div>
+        <div class="mc-block stone float-a" style="top:66%; right:5%;"></div>
+    </div>
+
+    <!-- Achievement toasts -->
+    <div id="toastStack" class="toast-stack" role="status" aria-live="polite"></div>
 
     <nav class="nav">
         <div class="nav-inner">
@@ -27,6 +49,9 @@
             <div class="nav-links">
                 <a href="#tools">Tools</a>
                 <a href="#findme">Find Me</a>
+                <button id="themeToggle" class="theme-toggle" type="button" aria-label="Toggle day and night">
+                    <span class="theme-icon">🌙</span>
+                </button>
                 <a href="https://ko-fi.com/dewdimpple" target="_blank" rel="noopener" class="nav-cta">
                     <img src="./images/kofilogo.webp" alt="" class="platform-logo"> Support
                 </a>
@@ -38,7 +63,7 @@
         <!-- Hero -->
         <header class="hero" data-reveal>
             <div class="hero-badge">
-                <span class="dot"></span> Minecraft Bedrock · Addons &amp; Tools
+                <span class="dot"></span> Minecraft Bedrock &middot; Addons &amp; Tools
             </div>
             <h1 class="hero-title">
                 Crafting the blocky world,<br>
@@ -52,11 +77,15 @@
                 <a href="#tools" class="btn btn-primary">Explore Tools ↓</a>
                 <a href="https://www.curseforge.com/members/amon28/projects" target="_blank" rel="noopener" class="btn btn-ghost">View Addons</a>
             </div>
+            <div class="particles">
+                <span></span><span></span><span></span><span></span><span></span>
+                <span></span><span></span><span></span><span></span><span></span>
+            </div>
         </header>
 
         <!-- Tools -->
         <section id="tools" class="section">
-            <h2 class="section-title" data-reveal><span class="section-tag">Tools</span> My Pages</h2>
+            <h2 class="section-title" data-reveal><span class="section-tag">Crafting Table</span> My Tools</h2>
             <div class="tools-grid">
                 <a class="tool-card" href="./painter_gen/" target="_blank" rel="noopener" data-reveal>
                     <div class="tool-icon tool-icon-paint">🎨</div>
@@ -81,10 +110,10 @@
 
         <!-- Find me -->
         <section id="findme" class="section">
-            <h2 class="section-title" data-reveal><span class="section-tag">Community</span> Find Me</h2>
+            <h2 class="section-title" data-reveal><span class="section-tag">Multiplayer</span> Find Me</h2>
             <div class="findme-grid">
                 <a class="findme-card" href="https://www.curseforge.com/members/amon28/projects" target="_blank" rel="noopener" data-reveal>
-                    <img src="./images/curseforge-logo.webp" alt="CurseForge" class="platform-logo lg">
+                    <span class="slot"><img src="./images/curseforge-logo.webp" alt="CurseForge" class="platform-logo lg"></span>
                     <div>
                         <h3>CurseForge</h3>
                         <p>All my published addons</p>
@@ -92,7 +121,7 @@
                     <span class="arrow">→</span>
                 </a>
                 <a class="findme-card" href="https://mcpedl.com/user/amon28/" target="_blank" rel="noopener" data-reveal style="--delay: 90ms">
-                    <img src="./images/mcpedl-logo.png" alt="MCPEDL" class="platform-logo lg">
+                    <span class="slot"><img src="./images/mcpedl-logo.png" alt="MCPEDL" class="platform-logo lg"></span>
                     <div>
                         <h3>MCPEDL</h3>
                         <p>Downloads &amp; previews</p>
@@ -100,7 +129,7 @@
                     <span class="arrow">→</span>
                 </a>
                 <a class="findme-card" href="https://x.com/Dewdimpple" target="_blank" rel="noopener" data-reveal style="--delay: 180ms">
-                    <img src="./images/twitter-logo.png" alt="X" class="platform-logo lg">
+                    <span class="slot"><img src="./images/twitter-logo.png" alt="X" class="platform-logo lg"></span>
                     <div>
                         <h3>X / Twitter</h3>
                         <p>Updates &amp; behind the scenes</p>
@@ -108,7 +137,7 @@
                     <span class="arrow">→</span>
                 </a>
                 <a class="findme-card" href="https://ko-fi.com/dewdimpple" target="_blank" rel="noopener" data-reveal style="--delay: 270ms">
-                    <img src="./images/kofilogo.webp" alt="Ko-fi" class="platform-logo lg">
+                    <span class="slot"><img src="./images/kofilogo.webp" alt="Ko-fi" class="platform-logo lg"></span>
                     <div>
                         <h3>Ko-fi</h3>
                         <p>Buy me a coffee ☕</p>
@@ -119,45 +148,109 @@
         </section>
 
         <footer class="footer" data-reveal>
-            <p>© 2025 Dewdimpple · Crafted with ❤️ for the Minecraft community</p>
+            <div class="footer-strip" aria-hidden="true"></div>
+            <p>© <span id="year"></span> Dewdimpple · Crafted with ❤️ for the Minecraft community</p>
         </footer>
     </main>
 
     <script>
-        // Staggered entrance animations
-        const observer = new IntersectionObserver((entries) => {
-            for (const entry of entries) {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('revealed');
-                    observer.unobserve(entry.target);
+        (function () {
+            document.getElementById('year').textContent = new Date().getFullYear();
+
+            /* ---------- Theme (day / night) ---------- */
+            var root = document.documentElement;
+            var toggle = document.getElementById('themeToggle');
+            var icon = toggle.querySelector('.theme-icon');
+            var metaTheme = document.querySelector('meta[name="theme-color"]');
+            var THEME_KEY = 'dewdimpple-theme';
+
+            function applyTheme(theme) {
+                root.setAttribute('data-theme', theme);
+                icon.textContent = theme === 'day' ? '☀️' : '🌙';
+                metaTheme.setAttribute('content', theme === 'day' ? '#7ec8f0' : '#0b1026');
+            }
+
+            var saved = null;
+            try { saved = localStorage.getItem(THEME_KEY); } catch (e) {}
+            applyTheme(saved === 'day' || saved === 'night' ? saved : 'night');
+
+            toggle.addEventListener('click', function () {
+                var next = root.getAttribute('data-theme') === 'day' ? 'night' : 'day';
+                applyTheme(next);
+                try { localStorage.setItem(THEME_KEY, next); } catch (e) {}
+            });
+
+            /* ---------- Achievement toasts ---------- */
+            var stack = document.getElementById('toastStack');
+            function achievement(title, sub, icon) {
+                var toast = document.createElement('div');
+                toast.className = 'toast';
+                toast.innerHTML =
+                    '<span class="toast-icon">' + icon + '</span>' +
+                    '<span class="toast-text"><strong>' + title + '</strong><small>' + sub + '</small></span>';
+                stack.appendChild(toast);
+                toast.addEventListener('click', function () { dismiss(toast); });
+                requestAnimationFrame(function () { toast.classList.add('show'); });
+                setTimeout(function () { dismiss(toast); }, 4600);
+                function dismiss(el) {
+                    if (!el.parentNode) return;
+                    el.classList.remove('show');
+                    setTimeout(function () { el.remove(); }, 400);
                 }
             }
-        }, { threshold: 0.15 });
 
-        document.querySelectorAll('[data-reveal]').forEach((el) => {
-            el.style.setProperty('--delay', el.style.getPropertyValue('--delay') || '0ms');
-            observer.observe(el);
-        });
+            setTimeout(function () {
+                achievement('Achievement Get!', 'Welcome, Crafter', '⛏');
+            }, 900);
 
-        // Cursor-follow glow on tool cards
-        document.querySelectorAll('.tool-card').forEach((card) => {
-            card.addEventListener('pointermove', (e) => {
-                const rect = card.getBoundingClientRect();
-                card.style.setProperty('--mx', (e.clientX - rect.left) + 'px');
-                card.style.setProperty('--my', (e.clientY - rect.top) + 'px');
+            var toolsUnlocked = false;
+            var toolsObserver = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    if (entry.isIntersecting && !toolsUnlocked) {
+                        toolsUnlocked = true;
+                        achievement('Achievement Get!', 'Diamonds! You found the Toolbox', '💎');
+                        toolsObserver.disconnect();
+                    }
+                });
+            }, { threshold: 0.4 });
+            var toolsSection = document.getElementById('tools');
+            if (toolsSection) toolsObserver.observe(toolsSection);
+
+            /* ---------- Staggered entrance animations ---------- */
+            var revealObserver = new IntersectionObserver(function (entries) {
+                entries.forEach(function (entry) {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('revealed');
+                        revealObserver.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.15 });
+
+            document.querySelectorAll('[data-reveal]').forEach(function (el) {
+                el.style.setProperty('--delay', el.style.getPropertyValue('--delay') || '0ms');
+                revealObserver.observe(el);
             });
-        });
 
-        // Smooth anchor scrolling
-        document.querySelectorAll('a[href^="#"]').forEach((a) => {
-            a.addEventListener('click', (e) => {
-                const target = document.querySelector(a.getAttribute('href'));
-                if (target) {
-                    e.preventDefault();
-                    target.scrollIntoView({ behavior: 'smooth' });
-                }
+            /* ---------- Cursor-follow glow on tool cards ---------- */
+            document.querySelectorAll('.tool-card').forEach(function (card) {
+                card.addEventListener('pointermove', function (e) {
+                    var rect = card.getBoundingClientRect();
+                    card.style.setProperty('--mx', (e.clientX - rect.left) + 'px');
+                    card.style.setProperty('--my', (e.clientY - rect.top) + 'px');
+                });
             });
-        });
+
+            /* ---------- Smooth anchor scrolling ---------- */
+            document.querySelectorAll('a[href^="#"]').forEach(function (a) {
+                a.addEventListener('click', function (e) {
+                    var target = document.querySelector(a.getAttribute('href'));
+                    if (target) {
+                        e.preventDefault();
+                        target.scrollIntoView({ behavior: 'smooth' });
+                    }
+                });
+            });
+        })();
     </script>
 </body>
 </html>

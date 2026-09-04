@@ -24,6 +24,22 @@ document.addEventListener("DOMContentLoaded", function () {
   const resizeAlgorithm = document.getElementById("resizeAlgorithm");
 
   let uploadedImageDataUrl = null;
+  // Tracks whether the loaded image came from a remote URL (needs CORS handling)
+  // rather than the current state of the toggle switch, so it stays accurate
+  // even if the user flips the toggle after loading an image.
+  let isRemoteImage = false;
+
+  function resetLoadedImage() {
+    uploadedImageDataUrl = null;
+    isRemoteImage = false;
+    generatePaintBtn.disabled = true;
+    outputLabel.textContent = "";
+    actionButtons.style.display = "none";
+    imageComparison.style.display = "none";
+    originalPreview.innerHTML = "";
+    resizedPreview.innerHTML = "";
+    progressBar.style.display = "none";
+  }
 
   // Toggle between file upload and URL input
   toggleImageSource.addEventListener("change", function () {
@@ -36,6 +52,9 @@ document.addEventListener("DOMContentLoaded", function () {
       urlSection.style.display = "none";
       imageUrlInput.value = "";
     }
+    // Whatever was loaded under the old mode no longer matches what's shown,
+    // so clear it rather than risk generating from a stale image.
+    resetLoadedImage();
   });
 
   // File upload event with progress update
@@ -62,9 +81,20 @@ document.addEventListener("DOMContentLoaded", function () {
         }
       };
 
+      reader.onerror = function () {
+        alert("Couldn't read that file. Please try a different image.");
+        progressBar.style.display = "none";
+      };
+
       reader.onload = function (e) {
         uploadedImageDataUrl = e.target.result;
-        originalPreview.innerHTML = `<img src="${uploadedImageDataUrl}" class="img-thumbnail" style="max-width: 200px;">`;
+        isRemoteImage = false;
+        originalPreview.innerHTML = "";
+        const previewImg = document.createElement("img");
+        previewImg.src = uploadedImageDataUrl;
+        previewImg.className = "img-thumbnail";
+        previewImg.style.maxWidth = "200px";
+        originalPreview.appendChild(previewImg);
         generatePaintBtn.disabled = false; // Enable generate button
 
         progressBarFill.style.width = "100%";
@@ -84,16 +114,22 @@ document.addEventListener("DOMContentLoaded", function () {
     }
     const img = new Image();
     img.crossOrigin = "Anonymous"; // Allow cross-origin images
-    img.src = imageUrl;
     img.onload = function () {
       uploadedImageDataUrl = imageUrl;
-      originalPreview.innerHTML = `<img src="${uploadedImageDataUrl}" class="img-thumbnail" style="max-width: 200px;">`;
+      isRemoteImage = true;
+      originalPreview.innerHTML = "";
+      const previewImg = document.createElement("img");
+      previewImg.src = uploadedImageDataUrl;
+      previewImg.className = "img-thumbnail";
+      previewImg.style.maxWidth = "200px";
+      originalPreview.appendChild(previewImg);
       generatePaintBtn.disabled = false;
       alert("Image loaded successfully!");
     };
     img.onerror = function () {
       alert("Failed to load the image. Please check the URL.");
     };
+    img.src = imageUrl;
   });
 
   // Generate paint event using iterative downscaling
@@ -101,89 +137,103 @@ document.addEventListener("DOMContentLoaded", function () {
     if (!uploadedImageDataUrl) return;
 
     const img = new Image();
-    if (toggleImageSource.checked) {
+    if (isRemoteImage) {
       img.crossOrigin = "Anonymous"; // Handle CORS for remote images
     }
-    img.src = uploadedImageDataUrl;
 
     img.onload = function () {
-      // Get target size from dropdown (e.g., 16 or 32)
-      const targetSize = parseInt(sizeSelector.value);
+      try {
+        // Get target size from dropdown (e.g., 16 or 32)
+        const targetSize = parseInt(sizeSelector.value, 10);
 
-      // Use the iterative algorithm to downscale the image
-      const downscaledCanvas = downscaleImage(img, targetSize, targetSize, resizeAlgorithm.value);
+        // Use the iterative algorithm to downscale the image
+        const downscaledCanvas = downscaleImage(img, targetSize, targetSize, resizeAlgorithm.value);
 
-      // For preview, create a larger version while keeping pixelation
-      const scaleFactor = 10; // adjust preview size if needed
-      const scaledCanvas = document.createElement("canvas");
-      scaledCanvas.width = targetSize * scaleFactor;
-      scaledCanvas.height = targetSize * scaleFactor;
-      const scaledCtx = scaledCanvas.getContext("2d");
-      scaledCtx.imageSmoothingEnabled = false;
-      scaledCtx.drawImage(downscaledCanvas, 0, 0, scaledCanvas.width, scaledCanvas.height);
+        // For preview, create a larger version while keeping pixelation
+        const scaleFactor = 10; // adjust preview size if needed
+        const scaledCanvas = document.createElement("canvas");
+        scaledCanvas.width = targetSize * scaleFactor;
+        scaledCanvas.height = targetSize * scaleFactor;
+        const scaledCtx = scaledCanvas.getContext("2d");
+        scaledCtx.imageSmoothingEnabled = false;
+        scaledCtx.drawImage(downscaledCanvas, 0, 0, scaledCanvas.width, scaledCanvas.height);
 
-      // Show the resized image preview
-      const resizedDataUrl = scaledCanvas.toDataURL();
-      resizedPreview.innerHTML = `<img src="${resizedDataUrl}" class="img-thumbnail" style="max-width: 300px;">`;
-      imageComparison.style.display = "flex";
+        // Show the resized image preview
+        const resizedDataUrl = scaledCanvas.toDataURL();
+        resizedPreview.innerHTML = "";
+        const resizedImg = document.createElement("img");
+        resizedImg.src = resizedDataUrl;
+        resizedImg.className = "img-thumbnail";
+        resizedImg.style.maxWidth = "300px";
+        resizedPreview.appendChild(resizedImg);
+        imageComparison.style.display = "flex";
 
-      // Extract pixel data from the downscaled canvas
-      const ctx = downscaledCanvas.getContext("2d");
-      const imageData = ctx.getImageData(0, 0, targetSize, targetSize);
-      const data = imageData.data;
+        // Extract pixel data from the downscaled canvas
+        const ctx = downscaledCanvas.getContext("2d");
+        const imageData = ctx.getImageData(0, 0, targetSize, targetSize);
+        const data = imageData.data;
 
-      let pixelArray = [];
-      for (let y = 0; y < targetSize; y++) {
-        let row = [];
-        for (let x = 0; x < targetSize; x++) {
-          let index = (y * targetSize + x) * 4;
-          row.push({
-            r: (data[index] / 255).toFixed(2),
-            g: (data[index + 1] / 255).toFixed(2),
-            b: (data[index + 2] / 255).toFixed(2),
-            a: (data[index + 3] / 255).toFixed(2),
-          });
+        let pixelArray = [];
+        for (let y = 0; y < targetSize; y++) {
+          let row = [];
+          for (let x = 0; x < targetSize; x++) {
+            let index = (y * targetSize + x) * 4;
+            row.push({
+              r: (data[index] / 255).toFixed(2),
+              g: (data[index + 1] / 255).toFixed(2),
+              b: (data[index + 2] / 255).toFixed(2),
+              a: (data[index + 3] / 255).toFixed(2),
+            });
+          }
+          pixelArray.push(row);
         }
-        pixelArray.push(row);
+
+        // Flip image data for correct orientation
+        pixelArray.reverse();
+        pixelArray.forEach(row => row.reverse());
+
+        // Format output as a JavaScript array with resolution and return value
+        let outputStr = "export function yourUniquePaintName() {\n";
+        outputStr += "  const resolution = " + targetSize + ";\n";
+        outputStr += "  const customImage = [\n";
+        pixelArray.forEach(row => {
+          let rowStr = row.map(pixel => `{ r: ${pixel.r}, g: ${pixel.g}, b: ${pixel.b}, a: ${pixel.a} }`).join(", ");
+          outputStr += "      [" + rowStr + "],\n";
+        });
+        outputStr += "  ];\n";
+        outputStr += "  return {customImage, resolution};\n";
+        outputStr += "}\n";
+
+        outputLabel.textContent = outputStr;
+        actionButtons.style.display = "block"; // Show copy & clear buttons
+      } catch (err) {
+        console.error("Failed to generate paint:", err);
+        alert(
+          "Couldn't process this image. This usually happens when an online " +
+          "image's server doesn't allow cross-origin access. Try downloading " +
+          "the image and uploading it directly instead of using its URL."
+        );
       }
-
-      // Flip image data for correct orientation
-      pixelArray.reverse();
-      pixelArray.forEach(row => row.reverse());
-
-      // Format output as a JavaScript array with resolution and return value
-      let outputStr = "export function yourUniquePaintName() {\n";
-      outputStr += "  const resolution = " + targetSize + ";\n";
-      outputStr += "  const customImage = [\n";
-      pixelArray.forEach(row => {
-        let rowStr = row.map(pixel => `{ r: ${pixel.r}, g: ${pixel.g}, b: ${pixel.b}, a: ${pixel.a} }`).join(", ");
-        outputStr += "      [" + rowStr + "],\n";
-      });
-      outputStr += "  ];\n";
-      outputStr += "  return {customImage, resolution};\n";
-      outputStr += "}\n";
-
-      outputLabel.textContent = outputStr;
-      actionButtons.style.display = "block"; // Show copy & clear buttons
     };
+
+    img.onerror = function () {
+      alert("Couldn't reload the image to generate paint. Please load it again.");
+    };
+
+    img.src = uploadedImageDataUrl;
   });
 
   // Copy to clipboard functionality
   copyButton.addEventListener("click", function () {
-    navigator.clipboard.writeText(outputLabel.textContent).then(() => alert("Copied to clipboard!"));
+    navigator.clipboard.writeText(outputLabel.textContent)
+      .then(() => alert("Copied to clipboard!"))
+      .catch(() => alert("Couldn't copy automatically — please select and copy the output text manually."));
   });
 
   // Clear function to reset the app
   clearButton.addEventListener("click", function () {
     imageUpload.value = "";
-    uploadedImageDataUrl = null;
-    originalPreview.innerHTML = "";
-    resizedPreview.innerHTML = "";
-    progressBar.style.display = "none";
-    outputLabel.textContent = "";
-    generatePaintBtn.disabled = true;
-    actionButtons.style.display = "none";
-    imageComparison.style.display = "none";
+    resetLoadedImage();
   });
 
   // Open Tutorial Modal

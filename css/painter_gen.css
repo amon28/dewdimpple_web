@@ -1,36 +1,358 @@
+/* ============================================
+   Painter Gen — Voxel Craft Theme
+   (Bootstrap 5 reskin — loaded after Bootstrap,
+   so these rules win the cascade without !important)
+   ============================================ */
+
+:root {
+    --sky-top: #0b1026;
+    --sky-bottom: #1b2547;
+
+    --panel: #2a2a3a;
+    --panel-light: #37374a;
+    --panel-border: #121218;
+    --bevel-light: rgba(255, 255, 255, 0.16);
+    --bevel-dark: rgba(0, 0, 0, 0.45);
+    --hard-shadow: rgba(0, 0, 0, 0.4);
+
+    --text: #f3efe3;
+    --text-muted: #b9b4c9;
+    --text-faint: #837f99;
+
+    --diamond: #57e3e0;
+    --gold: #f6c445;
+    --redstone: #e0483e;
+    --emerald: #46c26b;
+    --stone: #8c8c96;
+    --stone-dark: #58585f;
+
+    --font-pixel: 'Press Start 2P', 'Courier New', monospace;
+    --font-mono: 'VT323', 'Courier New', monospace;
+}
+
+body {
+    font-family: var(--font-mono);
+    font-size: 1.15rem;
+    color: var(--text);
+    background:
+        radial-gradient(1.5px 1.5px at 10% 15%, #fff 0, transparent 60%),
+        radial-gradient(1.5px 1.5px at 25% 40%, #fff 0, transparent 60%),
+        radial-gradient(1px 1px at 40% 10%, #fff 0, transparent 60%),
+        radial-gradient(1.5px 1.5px at 60% 30%, #fff 0, transparent 60%),
+        radial-gradient(1px 1px at 75% 20%, #fff 0, transparent 60%),
+        radial-gradient(1.5px 1.5px at 85% 45%, #fff 0, transparent 60%),
+        radial-gradient(1px 1px at 15% 60%, #fff 0, transparent 60%),
+        radial-gradient(1.5px 1.5px at 50% 55%, #fff 0, transparent 60%),
+        radial-gradient(1px 1px at 90% 65%, #fff 0, transparent 60%),
+        linear-gradient(180deg, var(--sky-top) 0%, var(--sky-bottom) 100%);
+    background-attachment: fixed;
+    min-height: 100vh;
+}
+
+h2, h3, h4, h5, .modal-title {
+    font-family: var(--font-pixel);
+    line-height: 1.6;
+}
+
+h2.text-center {
+    font-size: 1.3rem;
+    text-shadow: 3px 3px 0 var(--hard-shadow);
+    margin-bottom: 1.75rem;
+}
+
+/* ---------- Pinned toolbar ---------- */
+
 .container-fluid {
-  position: fixed;
-  top: 10px;
-  left: 0;
-  display: flex;
-  flex-direction: column;
-  max-width: 150px;
-  z-index: 10;
-}
-
-#content-links-btn {
-  background-color: green;
-  border-color: green;
-}
-
-#donateBtn{
-  background-color: red;
-  border-color: red;
+    position: fixed;
+    top: 10px;
+    left: 0;
+    display: flex;
+    flex-direction: column;
+    max-width: 160px;
+    z-index: 10;
+    gap: 8px;
+    padding-left: 12px;
 }
 
 .fixed-btn {
-  max-height: 38px;
-  transition: opacity 0.3s ease;
+    max-height: none;
+    transition: opacity 0.3s ease, transform 0.15s ease, box-shadow 0.15s ease;
+    margin: 0 !important;
 }
 
-/* When the screen width is 600px or smaller, change to horizontal layout */
+/* When the screen width is 800px or smaller, drop out of the page flow
+   instead of floating fixed, so the toolbar can't overlap the card */
 @media (max-width: 800px) {
-  .container-fluid {
-    flex-direction: row;
-    max-width: 100%;
-  }
+    .container-fluid {
+        position: static;
+        flex-direction: row;
+        max-width: 100%;
+        flex-wrap: wrap;
+        padding: 10px 10px 0;
+    }
 
-  .container-fluid button {
-    margin-right: 5px; /* Add spacing between buttons */
-  }
+    .container-fluid button {
+        margin-right: 5px;
+    }
+
+    .container.mt-5 {
+        margin-top: 1rem !important;
+    }
+}
+
+/* ---------- Buttons (pixel-bevel reskin) ---------- */
+
+.btn {
+    font-family: var(--font-mono);
+    font-size: 1.1rem;
+    font-weight: 700;
+    border-width: 3px;
+    border-radius: 6px;
+    border-color: var(--panel-border);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.btn:focus, .btn:focus-visible {
+    box-shadow: 0 0 0 3px rgba(87, 227, 224, 0.45);
+}
+
+.btn-primary,
+.btn-primary:hover,
+.btn-primary:focus {
+    background: var(--panel-light);
+    border-color: var(--panel-border);
+    color: var(--text);
+    box-shadow:
+        inset 2px 2px 0 var(--bevel-light),
+        inset -2px -2px 0 var(--bevel-dark),
+        4px 4px 0 var(--hard-shadow);
+}
+
+.btn-primary:hover {
+    border-color: var(--diamond);
+    transform: translate(-1px, -2px);
+    box-shadow:
+        inset 2px 2px 0 var(--bevel-light),
+        inset -2px -2px 0 var(--bevel-dark),
+        5px 6px 0 var(--hard-shadow);
+}
+
+.btn-primary:active {
+    transform: translate(1px, 1px) !important;
+    box-shadow: inset -2px -2px 0 var(--bevel-dark), 1px 1px 0 var(--hard-shadow) !important;
+}
+
+#generatePaint {
+    background: linear-gradient(180deg, #6fd6c7, var(--diamond)) !important;
+    color: #063a37 !important;
+    border-color: var(--panel-border) !important;
+}
+
+#generatePaint:disabled {
+    background: var(--panel-light) !important;
+    color: var(--text-faint) !important;
+    opacity: 1 !important;
+}
+
+.btn-links,
+#content-links-btn {
+    background: var(--emerald) !important;
+    color: #0d2417 !important;
+    border-color: var(--panel-border) !important;
+}
+
+.btn-donate,
+#donateBtn {
+    background: linear-gradient(180deg, #ffd873, var(--gold)) !important;
+    color: #3a2b06 !important;
+    border-color: var(--panel-border) !important;
+}
+
+.btn-success,
+#copyButton {
+    background: var(--emerald) !important;
+    border-color: var(--panel-border) !important;
+    color: #0d2417 !important;
+}
+
+.btn-danger,
+#clearButton {
+    background: var(--redstone) !important;
+    border-color: var(--panel-border) !important;
+    color: #fff !important;
+}
+
+.btn-secondary {
+    background: var(--panel-light) !important;
+    border-color: var(--panel-border) !important;
+    color: var(--text) !important;
+}
+
+.btn-primary#loadImageUrl {
+    margin-top: 8px !important;
+}
+
+/* ---------- Card / main panel ---------- */
+
+.card {
+    background: var(--panel);
+    color: var(--text);
+    border: 3px solid var(--panel-border);
+    border-radius: 8px;
+    box-shadow:
+        inset 3px 3px 0 var(--bevel-light),
+        inset -3px -3px 0 var(--bevel-dark),
+        7px 7px 0 var(--hard-shadow) !important;
+}
+
+.container.mt-5 {
+    max-width: 760px;
+    padding-left: 24px;
+    padding-right: 24px;
+}
+
+/* ---------- Form controls ---------- */
+
+.form-label {
+    color: var(--text-muted);
+    font-size: 1.05rem;
+    margin-bottom: 6px;
+}
+
+.form-control,
+.form-select {
+    background: var(--panel-light);
+    border: 2px solid var(--panel-border);
+    color: var(--text);
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 1.1rem;
+}
+
+.form-control:focus,
+.form-select:focus {
+    background: var(--panel-light);
+    color: var(--text);
+    border-color: var(--diamond);
+    box-shadow: 0 0 0 3px rgba(87, 227, 224, 0.35);
+}
+
+.form-control::placeholder {
+    color: var(--text-faint);
+}
+
+.form-select option {
+    background: var(--panel-light);
+    color: var(--text);
+}
+
+.form-check-input {
+    background-color: var(--panel-light);
+    border: 2px solid var(--panel-border);
+}
+
+.form-check-input:checked {
+    background-color: var(--emerald);
+    border-color: var(--panel-border);
+}
+
+.form-check-input:focus {
+    box-shadow: 0 0 0 3px rgba(87, 227, 224, 0.35);
+}
+
+.form-check-label {
+    color: var(--text-muted);
+}
+
+/* ---------- Progress bar ---------- */
+
+.progress {
+    background: var(--panel-light);
+    border: 2px solid var(--panel-border);
+    border-radius: 4px;
+}
+
+.progress-bar {
+    background: linear-gradient(90deg, var(--emerald), var(--diamond)) !important;
+    color: #06251f;
+    font-weight: 700;
+}
+
+/* ---------- Image previews / output ---------- */
+
+#imageComparison h5 {
+    font-family: var(--font-pixel);
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-bottom: 10px;
+}
+
+.img-thumbnail {
+    background: var(--panel-light);
+    border: 3px solid var(--panel-border);
+    border-radius: 6px;
+    padding: 6px;
+    box-shadow: inset 2px 2px 0 rgba(0, 0, 0, 0.25);
+    image-rendering: pixelated;
+}
+
+#outputLabel {
+    background: #0d0d14;
+    color: var(--emerald);
+    border: 2px solid var(--panel-border) !important;
+    border-radius: 6px;
+    font-family: var(--font-mono);
+    font-size: 1.05rem;
+}
+
+/* ---------- Modals ---------- */
+
+.modal-content {
+    background: var(--panel);
+    color: var(--text);
+    border: 3px solid var(--panel-border);
+    border-radius: 8px;
+    box-shadow:
+        inset 3px 3px 0 var(--bevel-light),
+        inset -3px -3px 0 var(--bevel-dark),
+        8px 8px 0 var(--hard-shadow);
+}
+
+.modal-header,
+.modal-footer {
+    border-color: rgba(255, 255, 255, 0.08);
+}
+
+.modal-title {
+    font-size: 0.95rem;
+}
+
+.modal-body h3,
+.modal-body h4 {
+    color: var(--gold);
+    font-size: 1rem;
+    margin-top: 1.2rem;
+}
+
+.modal-body ol {
+    color: var(--text-muted);
+    padding-left: 1.4rem;
+}
+
+.modal-body li {
+    margin-bottom: 6px;
+}
+
+.btn-close {
+    filter: invert(1) grayscale(1);
+}
+
+/* Links modal headings keep their accent colors but adapt to dark bg */
+#linksModal .modal-body h3 {
+    text-shadow: 2px 2px 0 var(--hard-shadow);
+}
+
+hr {
+    border-color: rgba(255, 255, 255, 0.12);
+    opacity: 1;
 }

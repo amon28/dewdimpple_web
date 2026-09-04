@@ -1686,7 +1686,7 @@ export const CampfireRecipe = new Recipe({
     { name: "minecraft:stick", data: 0 },
     { name: "minecraft:air", data: 0 },
     { name: "minecraft:stick", data: 0 },
-    { name: "minecraft:coals", data: 0 },
+    { name: "minecraft:coal", data: 0 },
     { name: "minecraft:stick", data: 0 },
     { name: "minecraft:logs", data: 0 },
     { name: "minecraft:logs", data: 0 },
@@ -5253,7 +5253,7 @@ export const FireChargeCoalSulphurRecipeIdRecipe = new Recipe({
   result: { name: "minecraft:fire_charge", data: 0, count: 3},
   items: [
     { name: "minecraft:blaze_powder", data: 0 },
-    { name: "minecraft:coals", data: 0 },
+    { name: "minecraft:coal", data: 0 },
     { name: "minecraft:gunpowder", data: 0 },
     { name: "minecraft:air", data: 0 },
     { name: "minecraft:air", data: 0 },
@@ -6705,7 +6705,7 @@ export const LeatherHelmetRecipe = new Recipe({
 });
 
 export const LeatherHorseArmorRecipe = new Recipe({
-  result: { name: "minecraft:horsearmorleather", data: 0, count: 1},
+  result: { name: "minecraft:leather_horse_armor", data: 0, count: 1},
   items: [
     { name: "minecraft:leather", data: 0 },
     { name: "minecraft:air", data: 0 },
@@ -6813,7 +6813,7 @@ export const LightBlueCandleRecipe = new Recipe({
   result: { name: "minecraft:light_blue_candle", data: 0, count: 1},
   items: [
     { name: "minecraft:candle", data: 0 },
-    { name: "minecraft:light_blye_dye", data: 0 },
+    { name: "minecraft:light_blue_dye", data: 0 },
     { name: "minecraft:air", data: 0 },
     { name: "minecraft:air", data: 0 },
     { name: "minecraft:air", data: 0 },
@@ -10170,7 +10170,7 @@ export const ScaffoldingRecipe = new Recipe({
 });
 
 export const SealanternRecipe = new Recipe({
-  result: { name: "minecraft:sealantern", data: 0, count: 1},
+  result: { name: "minecraft:sea_lantern", data: 0, count: 1},
   items: [
     { name: "minecraft:prismarine_shard", data: 0 },
     { name: "minecraft:prismarine_crystals", data: 0 },
@@ -10290,7 +10290,7 @@ export const SignBirchRecipe = new Recipe({
 });
 
 export const SignDarkoakRecipe = new Recipe({
-  result: { name: "minecraft:darkoak_sign", data: 0, count: 3},
+  result: { name: "minecraft:dark_oak_sign", data: 0, count: 3},
   items: [
     { name: "minecraft:dark_oak_planks", data: 0 },
     { name: "minecraft:dark_oak_planks", data: 0 },
@@ -10862,7 +10862,7 @@ export const SoulLanternRecipe = new Recipe({
 export const SoulTorchRecipe = new Recipe({
   result: { name: "minecraft:soul_torch", data: 0, count: 4},
   items: [
-    { name: "minecraft:coals", data: 0 },
+    { name: "minecraft:coal", data: 0 },
     { name: "minecraft:air", data: 0 },
     { name: "minecraft:air", data: 0 },
     { name: "minecraft:stick", data: 0 },
@@ -11552,7 +11552,7 @@ export const TntMinecartRecipe = new Recipe({
 export const TorchRecipe = new Recipe({
   result: { name: "minecraft:torch", data: 0, count: 4},
   items: [
-    { name: "minecraft:coals", data: 0 },
+    { name: "minecraft:coal", data: 0 },
     { name: "minecraft:air", data: 0 },
     { name: "minecraft:air", data: 0 },
     { name: "minecraft:stick", data: 0 },

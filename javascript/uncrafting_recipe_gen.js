@@ -38,7 +38,7 @@ const DYE_DATA = [
     "minecraft:ink_sac", "minecraft:red_dye", "minecraft:green_dye", "minecraft:cocoa_beans",
     "minecraft:lapis_lazuli", "minecraft:purple_dye", "minecraft:cyan_dye", "minecraft:light_gray_dye",
     "minecraft:gray_dye", "minecraft:pink_dye", "minecraft:lime_dye", "minecraft:yellow_dye",
-    "minecraft:light_blye_dye", "minecraft:magenta_dye", "minecraft:orange_dye", "minecraft:bone_meal",
+    "minecraft:light_blue_dye", "minecraft:magenta_dye", "minecraft:orange_dye", "minecraft:bone_meal",
     "minecraft:black_dye", "minecraft:brown_dye", "minecraft:blue_dye", "minecraft:white_dye"
 ];
 
@@ -57,7 +57,7 @@ const QUARTZ_BLOCK_DATA = [
 ];
 
 const BUCKET_DATA = [
-    "minecraft:bucket", "minecraft:milk_bucket", "minecraft:code_bucket",
+    "minecraft:bucket", "minecraft:milk_bucket", "minecraft:cod_bucket",
     "minecraft:salmon_bucket", "minecraft:tropical_fish_bucket", "minecraft:pufferfish_bucket"
 ];
 
@@ -364,10 +364,16 @@ async function processFile() {
         const seen = new Set();
         defaultRecipeList.replace(/[\n ]/g,"").split(",").forEach(name => seen.add(name));
         let processedCount = 0;
-        const totalFiles = Object.keys(zipContent.files).filter(name => 
+        const totalFiles = Object.keys(zipContent.files).filter(name =>
             !zipContent.files[name].dir && name.endsWith('.json')
         ).length;
-        
+        // Guard against a divide-by-zero (NaN progress) when the zip has no JSON files
+        const progressPerFile = totalFiles > 0 ? 50 / totalFiles : 0;
+
+        if (totalFiles === 0) {
+            showStatus('No recipe JSON files found in this zip. Generating defaults only.', 'info');
+        }
+
         for (const [filename, file] of Object.entries(zipContent.files)) {
             if (file.dir || !filename.endsWith('.json')) continue;
             
@@ -386,7 +392,7 @@ async function processFile() {
                 } else {
                     addRecipeResult(shortFilename, 'warning', 'Unknown recipe type (not shaped or shapeless)');
                     processedCount++;
-                    setProgress(30 + (processedCount / totalFiles) * 50);
+                    setProgress(30 + processedCount * progressPerFile);
                     continue;
                 }
                 
@@ -394,7 +400,7 @@ async function processFile() {
                 if (!r.description || !r.description.identifier) {
                     addRecipeResult(shortFilename, 'error', 'Missing recipe description or identifier');
                     processedCount++;
-                    setProgress(30 + (processedCount / totalFiles) * 50);
+                    setProgress(30 + processedCount * progressPerFile);
                     continue;
                 }
                 
@@ -405,7 +411,7 @@ async function processFile() {
                 if (seen.has(constName)) {
                     addRecipeResult(shortFilename, 'warning', 'Duplicate recipe name', constName);
                     processedCount++;
-                    setProgress(30 + (processedCount / totalFiles) * 50);
+                    setProgress(30 + processedCount * progressPerFile);
                     continue;
                 }
                 
@@ -414,7 +420,7 @@ async function processFile() {
                     const excludedType = EXCLUDE_TYPES.find(type => constName.toLowerCase().includes(type));
                     addRecipeResult(shortFilename, 'warning', `Excluded type: ${excludedType}`, constName);
                     processedCount++;
-                    setProgress(30 + (processedCount / totalFiles) * 50);
+                    setProgress(30 + processedCount * progressPerFile);
                     continue;
                 }
                 
@@ -422,7 +428,7 @@ async function processFile() {
                 if (filename.toLowerCase().includes('stonecutter') && shortFilename !== 'stonecutter.json') {
                     addRecipeResult(shortFilename, 'warning', 'Stonecutter recipe (excluded)', constName);
                     processedCount++;
-                    setProgress(30 + (processedCount / totalFiles) * 50);
+                    setProgress(30 + processedCount * progressPerFile);
                     continue;
                 }
                 
@@ -478,9 +484,9 @@ async function processFile() {
             }
             
             processedCount++;
-            setProgress(30 + (processedCount / totalFiles) * 50);
+            setProgress(30 + processedCount * progressPerFile);
         }
-        
+
         showStatus('Generating JavaScript code...', 'info');
         setProgress(85);
         
