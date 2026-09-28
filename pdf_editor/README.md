@@ -17,6 +17,13 @@ It reconstructs text, images, and many tables in Word from the edited PDF.
 On other systems, install `requirements-local.txt` with Python, then run
 `python local_server.py`.
 
+The GitHub Pages editor can also use the converter while `start-local.cmd` is
+running on the **same computer**. Your browser may ask for permission to access
+the local network; allow it to use Word export. PDFs go to `127.0.0.1` on that
+computer, not to GitHub. On a phone, `127.0.0.1` is the phone, so Word export
+requires a converter running on the phone; the Windows launcher on a separate
+computer cannot serve a phone opened through GitHub Pages.
+
 > Tip: If your browser ever refuses to load the bundled PDF worker (rare, only on
 > `file://` in some setups), either open `index.html` from a simple local server or
 > just click *Open* and import your PDF — pdf.js automatically falls back to a

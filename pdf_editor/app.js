@@ -1055,6 +1055,8 @@ async function exportWord() {
     toast('For Word export, start start-local.cmd and open the local address it shows.', 'error');
     return;
   }
+  const localApp = location.origin === 'http://127.0.0.1:8765' || location.origin === 'http://localhost:8765';
+  const wordUrl = localApp ? '/api/word' : 'http://127.0.0.1:8765/api/word';
   setBusy(true, 'Exporting…');
   const label = $('btnWord').querySelector('span');
   label.textContent = 'Exporting…';
@@ -1062,9 +1064,14 @@ async function exportWord() {
     const bytes = await buildEditedPdf();
     let response;
     try {
-      response = await fetch('/api/word', { method: 'POST', headers: { 'Content-Type': 'application/pdf' }, body: bytes });
+      response = await fetch(wordUrl, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/pdf' },
+        body: bytes,
+        ...(localApp ? {} : { targetAddressSpace: 'loopback' }),
+      });
     } catch (error) {
-      throw new Error('Start start-local.cmd and open http://127.0.0.1:8765');
+      throw new Error('Word export needs the converter on this device. On Windows, run start-local.cmd and allow local network access in the browser. GitHub Pages alone cannot convert PDFs.');
     }
     if (!response.ok) {
       const data = await response.json().catch(() => ({}));
@@ -1575,7 +1582,7 @@ function toast(msg, type) {
   el.className = 'toast' + (type === 'error' ? ' error' : type === 'success' ? ' success' : '');
   el.textContent = msg;
   root.appendChild(el);
-  setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .25s'; setTimeout(() => el.remove(), 260); }, 2600);
+  setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .25s'; setTimeout(() => el.remove(), 260); }, type === 'error' ? 6000 : 2600);
 }
 
 function handleDroppedFiles(files) {

@@ -29,6 +29,11 @@ MIME_TYPES = {
     ".ttf": "font/ttf",
 }
 MAX_PDF_BYTES = 40 * 1024 * 1024
+ALLOWED_ORIGINS = {
+    "http://127.0.0.1:8765",
+    "http://localhost:8765",
+    "https://amon28.github.io",
+}
 
 
 class StudioHandler(BaseHTTPRequestHandler):
@@ -47,6 +52,10 @@ class StudioHandler(BaseHTTPRequestHandler):
         self.send_header("Content-Length", str(len(data)))
         self.send_header("Cache-Control", "no-store")
         self.send_header("X-Content-Type-Options", "nosniff")
+        origin = self.headers.get("Origin")
+        if origin in ALLOWED_ORIGINS:
+            self.send_header("Access-Control-Allow-Origin", origin)
+            self.send_header("Vary", "Origin")
         for key, value in headers.items():
             self.send_header(key.replace("_", "-"), value)
         self.end_headers()
@@ -54,6 +63,27 @@ class StudioHandler(BaseHTTPRequestHandler):
 
     def json_reply(self, status: int, value: dict) -> None:
         self.reply(status, json.dumps(value).encode("utf-8"), "application/json; charset=utf-8")
+
+    def do_OPTIONS(self) -> None:
+        if not self.valid_host():
+            return
+        if urlsplit(self.path).path != "/api/word":
+            self.send_error(404)
+            return
+        if self.headers.get("Origin") not in ALLOWED_ORIGINS:
+            self.send_error(403)
+            return
+        if self.headers.get("Access-Control-Request-Method") != "POST":
+            self.send_error(405)
+            return
+        self.reply(
+            204,
+            b"",
+            "text/plain",
+            Access_Control_Allow_Methods="POST",
+            Access_Control_Allow_Headers="Content-Type",
+            Access_Control_Allow_Private_Network="true",
+        )
 
     def do_GET(self) -> None:
         if not self.valid_host():
@@ -79,7 +109,7 @@ class StudioHandler(BaseHTTPRequestHandler):
         if not self.valid_host():
             return
         origin = self.headers.get("Origin")
-        if origin and origin != "http://127.0.0.1:8765":
+        if origin and origin not in ALLOWED_ORIGINS:
             self.send_error(403)
             return
         if urlsplit(self.path).path != "/api/word":
