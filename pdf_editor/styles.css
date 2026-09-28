@@ -104,20 +104,6 @@ input, select { font-family: inherit; font-size: 12.5px; }
 .tb-btn.primary:disabled { background: #a5a3ea; border-color: #a5a3ea; }
 
 .export-wrap { position: relative; flex: 0 0 auto; }
-.export-menu {
-  position: absolute; right: 0; top: calc(100% + 7px);
-  width: 245px; padding: 5px; background: var(--panel);
-  border: 1px solid var(--border); border-radius: 10px;
-  box-shadow: var(--shadow-lg); z-index: 70;
-}
-.export-menu button {
-  display: flex; flex-direction: column; align-items: flex-start;
-  width: 100%; padding: 9px 10px; border: 0; border-radius: 7px;
-  background: transparent; color: var(--text); cursor: pointer; text-align: left;
-}
-.export-menu button:hover, .export-menu button:focus-visible { background: var(--accent-soft); outline: none; }
-.export-menu strong { font-size: 12.5px; font-weight: 600; }
-.export-menu small { font-size: 11px; color: var(--muted); margin-top: 2px; }
 
 .filename {
   max-width: 240px;

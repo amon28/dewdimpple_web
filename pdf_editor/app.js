@@ -1048,38 +1048,35 @@ async function savePdf() {
   }
 }
 
-async function exportWord(mode) {
+async function exportWord() {
   if (!state.pdfDoc) { toast('Open a PDF first', 'error'); return; }
   if (state.busy) return;
-  hideWordMenu();
+  if (location.protocol === 'file:') {
+    toast('For Word export, start start-local.cmd and open the local address it shows.', 'error');
+    return;
+  }
   setBusy(true, 'Exporting…');
   const label = $('btnWord').querySelector('span');
   label.textContent = 'Exporting…';
-  let pdf;
   try {
     const bytes = await buildEditedPdf();
-    pdf = await pdfjsLib.getDocument({ data: bytes.slice() }).promise;
-    let docx;
-    let effectiveMode = mode;
-    if (mode === 'layout') {
-      docx = await WordExport.layout(pdf, (page, total) => { label.textContent = `Page ${page}/${total}…`; });
-    } else {
-      docx = await WordExport.editable(pdf);
-      if (!docx) {
-        toast('A page has no selectable text; exporting page images instead.');
-        effectiveMode = 'layout';
-        docx = await WordExport.layout(pdf, (page, total) => { label.textContent = `Page ${page}/${total}…`; });
-      }
+    let response;
+    try {
+      response = await fetch('/api/word', { method: 'POST', headers: { 'Content-Type': 'application/pdf' }, body: bytes });
+    } catch (error) {
+      throw new Error('Start start-local.cmd and open http://127.0.0.1:8765');
     }
-    const name = (state.fileName || 'document.pdf').replace(/\.pdf$/i, '') +
-      (effectiveMode === 'layout' ? '-layout' : '-editable') + '.docx';
-    triggerDownload(docx, name);
+    if (!response.ok) {
+      const data = await response.json().catch(() => ({}));
+      throw new Error(data.error || 'Local converter unavailable. Start start-local.cmd.');
+    }
+    const name = (state.fileName || 'document.pdf').replace(/\.pdf$/i, '') + '-converted.docx';
+    triggerDownload(await response.blob(), name);
     toast('Exported — ' + name, 'success');
   } catch (err) {
     console.error(err);
     toast('Word export failed: ' + (err && err.message ? err.message : err), 'error');
   } finally {
-    if (pdf) await pdf.destroy();
     label.textContent = 'Export Word';
     setBusy(false);
   }
@@ -1629,7 +1626,7 @@ $('propsBody').addEventListener('change', () => { state.livePushed = false; });
 let panState = null;
 let spacePan = false;
 function canPanFrom(e) {
-  if (!state.pdfDoc || pinchState || (e.pointerType === 'touch' && pinchTouches.size)) return false;
+  if (!state.pdfDoc || pinchState || pinchSettling || (e.pointerType === 'touch' && pinchTouches.size)) return false;
   if (e.button === 1 || spacePan || state.tool === 'pan') return true;
   if (state.tool !== 'select' || e.button !== 0) return false;
   return !fc.findTarget(e);
@@ -1670,127 +1667,95 @@ window.addEventListener('keyup', (e) => {
 });
 window.addEventListener('blur', () => { spacePan = false; stage.classList.remove('space-pan'); });
 
-/* pinch-to-zoom (touch): two fingers change zoom and pan the stage together,
-   like a native photo/map viewer. Between commits we only move a cheap CSS
-   transform on #sheetWrap (GPU compositing, no canvas repaint) so it stays
-   smooth. But #sheetWrap is centered/clamped by CSS (width:fit-content +
-   margin:auto, plus the browser clamping scrollLeft/scrollTop to the real
-   scrollable range) — rules a plain CSS transform knows nothing about. If we
-   only ever committed once, at gesture end, the live transform could show a
-   position the real, CSS-constrained layout can never actually reach (e.g.
-   once the page fits the viewport at the new zoom, it MUST be centered), so
-   the view would visibly jump/snap the moment we finally committed.
-   Re-committing periodically (every PINCH_COMMIT_MS) keeps re-grounding the
-   live preview in what the real layout will do, so there's nothing left to
-   snap by the time the fingers lift — each commit does a real PDF re-render,
-   which is too slow to do every animation frame (that's what caused the
-   original blinking/stutter), but is imperceptible every ~150ms.
-   Runs on the capture phase so it takes priority over fabric's own pointer
-   handling and the pan-tool drag above — works no matter which tool is
-   active. The first finger's own down/move/up events are left alone until a
-   second finger joins; only then do we start swallowing events, so whatever
-   the first finger was doing (draw/select/pan) simply freezes during the
-   pinch and finalizes normally once it lifts. */
+/* Preview a pinch with a CSS transform, then rerender once when it ends.
+   Keeping the original page and finger positions as the gesture baseline
+   avoids lost movement when a slow PDF render overlaps another touch event. */
 const pinchTouches = new Map(); // pointerId -> {x, y}
-let pinchState = null; // set for the duration of an active 2-finger gesture
-const PINCH_COMMIT_MS = 140;
+let pinchState = null;
+let pinchSettling = false;
+let pinchRAF = null;
 
 function pinchDist(pts) { return Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y); }
 function pinchMid(pts) { return { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 }; }
 
-// (Re)establishes the live-gesture baseline from the CURRENTLY committed
-// zoom/scroll — used both when the pinch starts and after every periodic
-// commit, so the cheap CSS transform always starts back at identity.
-function rebasePinch(midX, midY, dist) {
-  const wrapRect = sheetWrap.getBoundingClientRect();
-  pinchState = {
-    startDist: Math.max(1, dist),
-    committedZoom: state.zoom,
-    minScale: 0.12 / state.zoom,
-    maxScale: 6 / state.zoom,
-    // page-content coordinates of the point under the fingers, used to
-    // reposition the scroll once we commit the real render
-    anchorX: clamp((midX - wrapRect.left) / Math.max(1, wrapRect.width), 0, 1),
-    anchorY: clamp((midY - wrapRect.top) / Math.max(1, wrapRect.height), 0, 1),
-    startMidX: midX,
-    startMidY: midY,
-    liveScale: 1,
-    liveMidX: midX,
-    liveMidY: midY,
-    lastCommitAt: performance.now(),
-  };
-  // scale visually around the point under the fingers, in sheetWrap's own
-  // (untransformed) local coordinates
-  sheetWrap.style.transformOrigin = `${midX - wrapRect.left}px ${midY - wrapRect.top}px`;
-  sheetWrap.style.transform = 'translate(0px, 0px) scale(1)';
-  sheetWrap.style.willChange = 'transform';
-}
-
 function beginPinch(pts) {
   const mid = pinchMid(pts);
-  rebasePinch(mid.x, mid.y, pinchDist(pts));
+  const rect = sheetWrap.getBoundingClientRect();
+  const anchorX = clamp((mid.x - rect.left) / Math.max(1, rect.width), 0, 1);
+  const anchorY = clamp((mid.y - rect.top) / Math.max(1, rect.height), 0, 1);
+  pinchState = {
+    startDist: Math.max(1, pinchDist(pts)),
+    startZoom: state.zoom,
+    rect: { left: rect.left, top: rect.top, width: rect.width, height: rect.height },
+    anchorX, anchorY,
+    liveScale: 1,
+    liveMidX: mid.x,
+    liveMidY: mid.y,
+  };
+  sheetWrap.style.transformOrigin = `${anchorX * rect.width}px ${anchorY * rect.height}px`;
+  sheetWrap.style.willChange = 'transform';
+  for (const id of pinchTouches.keys()) {
+    try { stage.setPointerCapture(id); } catch (err) { /* pointer already ended */ }
+  }
 }
 
-// Serializes every real commit (periodic ones and the final one) through a
-// single promise chain, so they always apply in order and never overlap —
-// renderCurrentPage() is async, and a second commit must never start while
-// one is still resizing/redrawing the canvases.
-let pinchCommitChain = Promise.resolve();
-
-function queueCommit(p) {
-  pinchCommitChain = pinchCommitChain.then(() => doCommit(p));
-  return pinchCommitChain;
-}
-
-async function doCommit(p) {
-  // p is the live pinchState object (not a snapshot) until a rebase swaps it
-  // out, so p.liveMidX/liveMidY/liveScale read here are as fresh as possible
-  const newZoom = clamp(p.committedZoom * p.liveScale, 0.12, 6);
-  if (Math.abs(newZoom - state.zoom) >= 0.001) {
-    state.zoom = newZoom;
-    state.zoomMode = 'custom';
-    syncPage();
-    await renderCurrentPage();
+async function finishPinch(p) {
+  pinchSettling = true;
+  try {
+    const nextZoom = clamp(p.startZoom * p.liveScale, 0.12, 6);
+    if (Math.abs(nextZoom - state.zoom) >= 0.001) {
+      syncPage();
+      state.zoom = nextZoom;
+      state.zoomMode = 'custom';
+      await renderCurrentPage();
+    }
     sheetWrap.style.transform = '';
     restoreZoomAnchor({ clientX: p.liveMidX, clientY: p.liveMidY, x: p.anchorX, y: p.anchorY });
-  }
-  if (pinchState === p) {
-    // gesture is still live — rebase onto the freshly-committed baseline
-    rebasePinch(p.liveMidX, p.liveMidY, Math.max(1, p.startDist * p.liveScale));
-  } else if (!pinchState) {
-    // gesture ended while this commit was in flight — clean up styles
+  } catch (err) {
+    console.error('Pinch zoom failed:', err);
+  } finally {
     sheetWrap.style.transform = '';
     sheetWrap.style.transformOrigin = '';
     sheetWrap.style.willChange = '';
+    pinchSettling = false;
+    if (pinchTouches.size >= 2) beginPinch(Array.from(pinchTouches.values()).slice(0, 2));
+    else if (pinchTouches.size === 1) {
+      const [id, point] = pinchTouches.entries().next().value;
+      panState = { id, x: point.x, y: point.y, sl: stage.scrollLeft, st: stage.scrollTop };
+      stage.classList.add('dragging-page');
+    }
   }
-  // if a *new* gesture started while this commit was in flight, pinchState
-  // is a different, already-rebased object — leave it alone entirely
 }
 
-let pinchRAF = null;
 function updatePinch(pts) {
   if (!pinchState) return;
   const dist = pinchDist(pts);
   if (dist >= 1) {
     const mid = pinchMid(pts);
-    pinchState.liveScale = clamp(dist / pinchState.startDist, pinchState.minScale, pinchState.maxScale);
+    pinchState.liveScale = clamp(dist / pinchState.startDist, 0.12 / pinchState.startZoom, 6 / pinchState.startZoom);
     pinchState.liveMidX = mid.x;
     pinchState.liveMidY = mid.y;
-  }
-  if (performance.now() - pinchState.lastCommitAt > PINCH_COMMIT_MS) {
-    pinchState.lastCommitAt = performance.now();
-    queueCommit(pinchState);
   }
   if (pinchRAF) return;
   pinchRAF = requestAnimationFrame(() => {
     pinchRAF = null;
     if (!pinchState) return;
-    const tx = pinchState.liveMidX - pinchState.startMidX;
-    const ty = pinchState.liveMidY - pinchState.startMidY;
-    // translate() is listed first so it applies in screen pixels *after* the
-    // scale — that keeps the transform-origin point tracking the live
-    // mid-point while everything else scales around it
-    sheetWrap.style.transform = `translate(${tx}px, ${ty}px) scale(${pinchState.liveScale})`;
+    const p = pinchState;
+    const scaledW = p.rect.width * p.liveScale;
+    const scaledH = p.rect.height * p.liveScale;
+    const stageRect = stage.getBoundingClientRect();
+    const padding = parseFloat(getComputedStyle(viewport).paddingLeft) || 0;
+    const x = p.liveMidX - p.anchorX * scaledW;
+    const y = p.liveMidY - p.anchorY * scaledH;
+    const left = scaledW <= stageRect.width - 2 * padding
+      ? stageRect.left + (stageRect.width - scaledW) / 2
+      : clamp(x, stageRect.right - padding - scaledW, stageRect.left + padding);
+    const top = scaledH <= stageRect.height - 2 * padding
+      ? stageRect.top + padding
+      : clamp(y, stageRect.bottom - padding - scaledH, stageRect.top + padding);
+    const tx = left - p.rect.left - p.anchorX * p.rect.width * (1 - p.liveScale);
+    const ty = top - p.rect.top - p.anchorY * p.rect.height * (1 - p.liveScale);
+    sheetWrap.style.transform = `translate(${tx}px, ${ty}px) scale(${p.liveScale})`;
   });
 }
 
@@ -1800,16 +1765,17 @@ function endPinchTouch(e) {
   const p = pinchState;
   pinchState = null;
   if (pinchRAF) { cancelAnimationFrame(pinchRAF); pinchRAF = null; }
-  queueCommit(p); // final commit — doCommit() clears the transform once it applies
+  finishPinch(p);
 }
 
 stage.addEventListener('pointerdown', (e) => {
   if (e.pointerType !== 'touch' || !state.pdfDoc) return;
   pinchTouches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (pinchSettling) { e.preventDefault(); e.stopPropagation(); return; }
   if (pinchTouches.size < 2) return;
   e.preventDefault();
   e.stopPropagation();
-  if (pinchState) return; // a third finger — keep pinching with the original two
+  if (pinchState) return;
   panState = null;
   stage.classList.remove('dragging-page');
   fc.discardActiveObject();
@@ -1820,6 +1786,7 @@ stage.addEventListener('pointerdown', (e) => {
 stage.addEventListener('pointermove', (e) => {
   if (!pinchTouches.has(e.pointerId)) return;
   pinchTouches.set(e.pointerId, { x: e.clientX, y: e.clientY });
+  if (pinchSettling) { e.preventDefault(); e.stopPropagation(); return; }
   if (!pinchState || pinchTouches.size < 2) return;
   e.preventDefault();
   e.stopPropagation();
@@ -1828,7 +1795,6 @@ stage.addEventListener('pointermove', (e) => {
 
 stage.addEventListener('pointerup', endPinchTouch, { capture: true });
 stage.addEventListener('pointercancel', endPinchTouch, { capture: true });
-stage.addEventListener('pointerleave', endPinchTouch, { capture: true });
 
 // keep the floating selection toolbar anchored while the page scrolls
 stage.addEventListener('scroll', () => updateSelBar());
@@ -1855,19 +1821,7 @@ function toggleMenu() {
 function hideMenu() {
   $('menuDropdown').classList.add('hidden');
 }
-function hideWordMenu() {
-  $('wordMenu').classList.add('hidden');
-  $('btnWord').setAttribute('aria-expanded', 'false');
-}
-$('btnWord').addEventListener('click', (e) => {
-  e.stopPropagation();
-  const visible = $('wordMenu').classList.toggle('hidden');
-  $('btnWord').setAttribute('aria-expanded', String(!visible));
-});
-$('wordMenu').addEventListener('click', (e) => {
-  const button = e.target.closest('[data-word-mode]');
-  if (button) exportWord(button.dataset.wordMode);
-});
+$('btnWord').addEventListener('click', () => exportWord());
 $('btnMenu').addEventListener('click', (e) => { e.stopPropagation(); toggleMenu(); });
 $('menuDropdown').addEventListener('click', (e) => {
   const btn = e.target.closest('button');
@@ -1882,12 +1836,10 @@ $('menuDropdown').addEventListener('click', (e) => {
   else if (act === 'zoomin') applyZoom(state.zoom * 1.2);
   else if (act === 'zoomout') applyZoom(state.zoom / 1.2);
   else if (act === 'fitwidth') fitZoom('fit-width');
-  else if (act === 'word-editable') exportWord('editable');
-  else if (act === 'word-layout') exportWord('layout');
+  else if (act === 'word-local') exportWord();
 });
 document.addEventListener('click', (e) => {
   if (!e.target.closest('#menuDropdown') && !e.target.closest('#btnMenu')) hideMenu();
-  if (!e.target.closest('.export-wrap')) hideWordMenu();
 });
 
 /* floating selection toolbar (mobile): delete / layers / duplicate above the selection */
