@@ -40,6 +40,7 @@ const ICONS = {
   'chev-left': '<polyline points="15 18 9 12 15 6"/>',
   'chev-right': '<polyline points="9 18 15 12 9 6"/>',
   pdf: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="9" y1="13" x2="15" y2="13"/><line x1="9" y1="17" x2="15" y2="17"/>',
+  word: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="m8 12 1.5 6 2.5-4 2.5 4 1.5-6"/>',
   upload: '<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>',
   pages: '<polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/>',
   sliders: '<line x1="4" y1="21" x2="4" y2="14"/><line x1="4" y1="10" x2="4" y2="3"/><line x1="12" y1="21" x2="12" y2="12"/><line x1="12" y1="8" x2="12" y2="3"/><line x1="20" y1="21" x2="20" y2="16"/><line x1="20" y1="12" x2="20" y2="3"/><line x1="1" y1="14" x2="7" y2="14"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="17" y1="16" x2="23" y2="16"/>',
@@ -93,6 +94,7 @@ const state = {
   undoStack: [],
   redoStack: [],
   dirty: false,
+  busy: false,
   loading: false,
   livePushed: false,
   pageSizes: [],
@@ -108,7 +110,7 @@ const HIGHLIGHT_STYLE = { color: '#fde047', opacity: 0.4 };
 const DRAW_TOOLS = new Set(['pen', 'highlighter', 'rect', 'ellipse', 'line', 'arrow']);
 
 const TOOL_HINTS = {
-  select: 'Select: click an item to edit it, drag to move, drag handles to resize or rotate.',
+  select: 'Select: drag an item to move it, or drag empty page space to pan. Hold Space to pan anywhere.',
   pan: 'Pan: drag anywhere to scroll around the page.',
   text: 'Text: click the page to add a text box, then type. Double-click any text to edit it.',
   image: 'Image: choose a file, then click the page to place it. Click the page again to place more.',
@@ -176,6 +178,7 @@ fabric.Object.prototype.set({
    ============================================================ */
 async function openFile(file) {
   if (!file) return;
+  if (state.busy) return;
   if (!/\.pdf$/i.test(file.name || '')) { toast('Please choose a PDF file.', 'error'); return; }
   setBusy(true);
   try {
@@ -214,10 +217,19 @@ async function loadPdf(bytes, name) {
 }
 
 let renderToken = 0;
+let renderChain = Promise.resolve();
 
-async function renderCurrentPage() {
-  if (!state.pdfDoc) return;
+function renderCurrentPage() {
   const token = ++renderToken;
+  // A PDF canvas cannot be rendered into twice at once. Skip superseded
+  // requests so quick wheel gestures always settle on the newest zoom.
+  renderChain = renderChain.catch(() => {}).then(() => renderPage(token));
+  return renderChain;
+}
+
+async function renderPage(token) {
+  if (!state.pdfDoc) return;
+  if (token !== renderToken) return;
   const page = await state.pdfDoc.getPage(state.currentPage);
   if (token !== renderToken) return;
   const base = page.getViewport({ scale: 1 });
@@ -254,6 +266,7 @@ async function renderCurrentPage() {
 
 async function fitZoom(mode) {
   if (!state.pdfDoc) return;
+  ++zoomSequence;
   state.zoomMode = mode || state.zoomMode;
   const page = await state.pdfDoc.getPage(state.currentPage);
   const base = page.getViewport({ scale: 1 });
@@ -262,14 +275,40 @@ async function fitZoom(mode) {
   let z = state.zoom;
   if (state.zoomMode === 'fit-width') z = availW / base.width;
   else if (state.zoomMode === 'fit-page') z = Math.min(availW / base.width, availH / base.height);
+  syncPage();
   state.zoom = clamp(z, 0.12, 6);
   await renderCurrentPage();
 }
 
-async function applyZoom(z) {
-  state.zoom = clamp(z, 0.12, 6);
+let zoomSequence = 0;
+function captureZoomAnchor(point) {
+  const stageRect = stage.getBoundingClientRect();
+  const rect = sheetWrap.getBoundingClientRect();
+  const clientX = point ? point.x : stageRect.left + stageRect.width / 2;
+  const clientY = point ? point.y : stageRect.top + stageRect.height / 2;
+  return {
+    clientX, clientY,
+    x: clamp((clientX - rect.left) / Math.max(1, rect.width), 0, 1),
+    y: clamp((clientY - rect.top) / Math.max(1, rect.height), 0, 1),
+  };
+}
+function restoreZoomAnchor(anchor) {
+  const rect = sheetWrap.getBoundingClientRect();
+  stage.scrollLeft += rect.left + anchor.x * rect.width - anchor.clientX;
+  stage.scrollTop += rect.top + anchor.y * rect.height - anchor.clientY;
+}
+
+async function applyZoom(z, point) {
+  if (!state.pdfDoc) return;
+  const next = clamp(z, 0.12, 6);
+  if (Math.abs(next - state.zoom) < 0.0001) return;
+  const anchor = captureZoomAnchor(point);
+  const request = ++zoomSequence;
+  syncPage();
+  state.zoom = next;
   state.zoomMode = 'custom';
   await renderCurrentPage();
+  if (request === zoomSequence) restoreZoomAnchor(anchor);
 }
 
 const ZOOM_OPTS = [25, 50, 75, 100, 125, 150, 200, 300, 400];
@@ -297,9 +336,10 @@ async function goToPage(p) {
     return;
   }
   syncPage();
+  ++zoomSequence;
   state.currentPage = p;
-  viewport.scrollTop = 0;
-  viewport.scrollLeft = 0;
+  stage.scrollTop = 0;
+  stage.scrollLeft = 0;
   updatePageUI();
   if (state.zoomMode === 'fit-width' || state.zoomMode === 'fit-page') await fitZoom(state.zoomMode);
   else await renderCurrentPage();
@@ -972,24 +1012,28 @@ function applyLive(fn) {
 /* ============================================================
    Save — flatten annotations into the PDF with pdf-lib
    ============================================================ */
+async function buildEditedPdf() {
+  syncPage();
+  const pdfDoc = await PDFLib.PDFDocument.load(state.pdfBytes);
+  if (window.fontkit) { try { pdfDoc.registerFontkit(window.fontkit); } catch (e) { /* fontkit optional */ } }
+  const fontCache = new Map();
+  // Draw sequentially — pdf-lib's async font/image embedding is not re-entrant.
+  for (let i = 0; i < state.pageCount; i++) {
+    const page = pdfDoc.getPage(i);
+    const objs = state.annotations[i] || [];
+    for (const obj of objs) {
+      await drawAnnotation(pdfDoc, page, obj, fontCache);
+    }
+  }
+  return pdfDoc.save({ useObjectStreams: true });
+}
+
 async function savePdf() {
   if (!state.pdfDoc) { toast('Open a PDF first', 'error'); return; }
-  syncPage();
-  setBusy(true);
+  if (state.busy) return;
+  setBusy(true, 'Saving…');
   try {
-    const pdfDoc = await PDFLib.PDFDocument.load(state.pdfBytes);
-    if (window.fontkit) { try { pdfDoc.registerFontkit(window.fontkit); } catch (e) { /* fontkit optional */ } }
-    const fontCache = new Map();
-    // Draw sequentially — pdf-lib's async font/image embedding is not re-entrant,
-    // so concurrent tasks corrupt each other's output.
-    for (let i = 0; i < state.pageCount; i++) {
-      const page = pdfDoc.getPage(i);
-      const objs = state.annotations[i] || [];
-      for (const obj of objs) {
-        await drawAnnotation(pdfDoc, page, obj, fontCache);
-      }
-    }
-    const bytes = await pdfDoc.save({ useObjectStreams: true });
+    const bytes = await buildEditedPdf();
     const blob = new Blob([bytes], { type: 'application/pdf' });
     const name = (state.fileName || 'document.pdf').replace(/\.pdf$/i, '') + '-edited.pdf';
     triggerDownload(blob, name);
@@ -1000,6 +1044,43 @@ async function savePdf() {
     console.error(err);
     toast('Save failed: ' + (err && err.message ? err.message : err), 'error');
   } finally {
+    setBusy(false);
+  }
+}
+
+async function exportWord(mode) {
+  if (!state.pdfDoc) { toast('Open a PDF first', 'error'); return; }
+  if (state.busy) return;
+  hideWordMenu();
+  setBusy(true, 'Exporting…');
+  const label = $('btnWord').querySelector('span');
+  label.textContent = 'Exporting…';
+  let pdf;
+  try {
+    const bytes = await buildEditedPdf();
+    pdf = await pdfjsLib.getDocument({ data: bytes.slice() }).promise;
+    let docx;
+    let effectiveMode = mode;
+    if (mode === 'layout') {
+      docx = await WordExport.layout(pdf, (page, total) => { label.textContent = `Page ${page}/${total}…`; });
+    } else {
+      docx = await WordExport.editable(pdf);
+      if (!docx) {
+        toast('A page has no selectable text; exporting page images instead.');
+        effectiveMode = 'layout';
+        docx = await WordExport.layout(pdf, (page, total) => { label.textContent = `Page ${page}/${total}…`; });
+      }
+    }
+    const name = (state.fileName || 'document.pdf').replace(/\.pdf$/i, '') +
+      (effectiveMode === 'layout' ? '-layout' : '-editable') + '.docx';
+    triggerDownload(docx, name);
+    toast('Exported — ' + name, 'success');
+  } catch (err) {
+    console.error(err);
+    toast('Word export failed: ' + (err && err.message ? err.message : err), 'error');
+  } finally {
+    if (pdf) await pdf.destroy();
+    label.textContent = 'Export Word';
     setBusy(false);
   }
 }
@@ -1163,8 +1244,8 @@ async function drawTextAnnotation(pdfDoc, page, obj, ph, fontCache) {
       const extra = (effW - line.width) / (line.words.length - 1);
       let x = x0;
       for (let k = 0; k < line.words.length; k++) {
-        drawAt(x, y, line.words[k].text);
-        if (k < line.words.length - 1) x += line.words[k].width + spaceW + extra;
+        drawAt(x, y, line.words[k]);
+        if (k < line.words.length - 1) x += font.widthOfTextAtSize(line.words[k], size) + spaceW + extra;
       }
     } else {
       drawAt(x0, y, line.words.join(' '));
@@ -1458,10 +1539,13 @@ function triggerDownload(blob, name) {
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 4000);
 }
 
-function setBusy(busy) {
+function setBusy(busy, message = 'Working…') {
+  state.busy = busy;
   const btn = $('btnSave');
   btn.disabled = busy || !state.pdfDoc;
-  $('saveLabel').textContent = busy ? 'Saving…' : 'Save PDF';
+  $('btnWord').disabled = busy || !state.pdfDoc;
+  document.querySelectorAll('[data-act^="word-"]').forEach((button) => { button.disabled = busy || !state.pdfDoc; });
+  $('saveLabel').textContent = busy ? message : 'Save PDF';
   const spinner = btn.querySelector('.spinner');
   const svg = btn.querySelector('svg');
   if (busy) {
@@ -1481,6 +1565,8 @@ function updateToolAvailability() {
   const has = !!state.pdfDoc;
   ['btnZoomIn', 'btnZoomOut', 'btnUndo', 'btnRedo'].forEach((id) => { $(id).disabled = !has; });
   $('btnSave').disabled = !has;
+  $('btnWord').disabled = !has;
+  document.querySelectorAll('[data-act^="word-"]').forEach((button) => { button.disabled = !has || state.busy; });
   $('btnAddPage').disabled = !has;
   $('btnDelPage').disabled = !has;
 }
@@ -1538,21 +1624,51 @@ fc.on('text:editing:exited', () => { syncPage(); commitPre(); refreshProps(); up
 // end a live slider gesture when a control commits its value
 $('propsBody').addEventListener('change', () => { state.livePushed = false; });
 
-/* pan tool: scroll the stage */
+/* Drag an empty part of the page to pan. Space and middle mouse drag pan even
+   over annotations, while dragging an annotation in Select still moves it. */
 let panState = null;
+let spacePan = false;
+function canPanFrom(e) {
+  if (!state.pdfDoc || pinchState || (e.pointerType === 'touch' && pinchTouches.size)) return false;
+  if (e.button === 1 || spacePan || state.tool === 'pan') return true;
+  if (state.tool !== 'select' || e.button !== 0) return false;
+  return !fc.findTarget(e);
+}
 stage.addEventListener('pointerdown', (e) => {
-  if (state.tool !== 'pan' || !state.pdfDoc) return;
-  panState = { x: e.clientX, y: e.clientY, sl: stage.scrollLeft, st: stage.scrollTop };
+  if (!canPanFrom(e)) return;
+  panState = { id: e.pointerId, x: e.clientX, y: e.clientY, sl: stage.scrollLeft, st: stage.scrollTop };
+  stage.classList.add('dragging-page');
   try { stage.setPointerCapture(e.pointerId); } catch (err) { /* ignore */ }
   e.preventDefault();
-});
+  e.stopPropagation();
+}, { capture: true });
 stage.addEventListener('pointermove', (e) => {
-  if (!panState) return;
+  if (!panState || panState.id !== e.pointerId || pinchState) return;
   stage.scrollLeft = panState.sl - (e.clientX - panState.x);
   stage.scrollTop = panState.st - (e.clientY - panState.y);
+  e.preventDefault();
+  e.stopPropagation();
+}, { capture: true });
+function endPagePan(e) {
+  if (!panState || panState.id !== e.pointerId) return;
+  panState = null;
+  stage.classList.remove('dragging-page');
+  e.stopPropagation();
+}
+stage.addEventListener('pointerup', endPagePan, { capture: true });
+stage.addEventListener('pointercancel', endPagePan, { capture: true });
+window.addEventListener('keydown', (e) => {
+  if (e.code !== 'Space' || e.repeat || /INPUT|TEXTAREA|SELECT/.test(e.target.tagName) || fc.getObjects().some((o) => o.isEditing)) return;
+  spacePan = true;
+  stage.classList.add('space-pan');
+  e.preventDefault();
 });
-stage.addEventListener('pointerup', () => { panState = null; });
-stage.addEventListener('pointercancel', () => { panState = null; });
+window.addEventListener('keyup', (e) => {
+  if (e.code !== 'Space') return;
+  spacePan = false;
+  stage.classList.remove('space-pan');
+});
+window.addEventListener('blur', () => { spacePan = false; stage.classList.remove('space-pan'); });
 
 /* pinch-to-zoom (touch): two fingers change zoom and pan the stage together,
    like a native photo/map viewer. Between commits we only move a cheap CSS
@@ -1587,7 +1703,6 @@ function pinchMid(pts) { return { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + p
 // commit, so the cheap CSS transform always starts back at identity.
 function rebasePinch(midX, midY, dist) {
   const wrapRect = sheetWrap.getBoundingClientRect();
-  const stageRect = stage.getBoundingClientRect();
   pinchState = {
     startDist: Math.max(1, dist),
     committedZoom: state.zoom,
@@ -1595,8 +1710,8 @@ function rebasePinch(midX, midY, dist) {
     maxScale: 6 / state.zoom,
     // page-content coordinates of the point under the fingers, used to
     // reposition the scroll once we commit the real render
-    anchorX: (stage.scrollLeft + (midX - stageRect.left)) / state.zoom,
-    anchorY: (stage.scrollTop + (midY - stageRect.top)) / state.zoom,
+    anchorX: clamp((midX - wrapRect.left) / Math.max(1, wrapRect.width), 0, 1),
+    anchorY: clamp((midY - wrapRect.top) / Math.max(1, wrapRect.height), 0, 1),
     startMidX: midX,
     startMidY: midY,
     liveScale: 1,
@@ -1634,10 +1749,10 @@ async function doCommit(p) {
   if (Math.abs(newZoom - state.zoom) >= 0.001) {
     state.zoom = newZoom;
     state.zoomMode = 'custom';
+    syncPage();
     await renderCurrentPage();
-    const rect = stage.getBoundingClientRect();
-    stage.scrollLeft = p.anchorX * newZoom - (p.liveMidX - rect.left);
-    stage.scrollTop = p.anchorY * newZoom - (p.liveMidY - rect.top);
+    sheetWrap.style.transform = '';
+    restoreZoomAnchor({ clientX: p.liveMidX, clientY: p.liveMidY, x: p.anchorX, y: p.anchorY });
   }
   if (pinchState === p) {
     // gesture is still live — rebase onto the freshly-committed baseline
@@ -1696,6 +1811,7 @@ stage.addEventListener('pointerdown', (e) => {
   e.stopPropagation();
   if (pinchState) return; // a third finger — keep pinching with the original two
   panState = null;
+  stage.classList.remove('dragging-page');
   fc.discardActiveObject();
   fc.requestRenderAll();
   beginPinch(Array.from(pinchTouches.values()).slice(0, 2));
@@ -1739,6 +1855,19 @@ function toggleMenu() {
 function hideMenu() {
   $('menuDropdown').classList.add('hidden');
 }
+function hideWordMenu() {
+  $('wordMenu').classList.add('hidden');
+  $('btnWord').setAttribute('aria-expanded', 'false');
+}
+$('btnWord').addEventListener('click', (e) => {
+  e.stopPropagation();
+  const visible = $('wordMenu').classList.toggle('hidden');
+  $('btnWord').setAttribute('aria-expanded', String(!visible));
+});
+$('wordMenu').addEventListener('click', (e) => {
+  const button = e.target.closest('[data-word-mode]');
+  if (button) exportWord(button.dataset.wordMode);
+});
 $('btnMenu').addEventListener('click', (e) => { e.stopPropagation(); toggleMenu(); });
 $('menuDropdown').addEventListener('click', (e) => {
   const btn = e.target.closest('button');
@@ -1753,9 +1882,12 @@ $('menuDropdown').addEventListener('click', (e) => {
   else if (act === 'zoomin') applyZoom(state.zoom * 1.2);
   else if (act === 'zoomout') applyZoom(state.zoom / 1.2);
   else if (act === 'fitwidth') fitZoom('fit-width');
+  else if (act === 'word-editable') exportWord('editable');
+  else if (act === 'word-layout') exportWord('layout');
 });
 document.addEventListener('click', (e) => {
   if (!e.target.closest('#menuDropdown') && !e.target.closest('#btnMenu')) hideMenu();
+  if (!e.target.closest('.export-wrap')) hideWordMenu();
 });
 
 /* floating selection toolbar (mobile): delete / layers / duplicate above the selection */
@@ -1999,10 +2131,10 @@ window.addEventListener('resize', () => {
 
 /* ctrl+wheel zoom */
 window.addEventListener('wheel', (e) => {
-  if (!state.pdfDoc || !(e.ctrlKey || e.metaKey)) return;
+  if (!state.pdfDoc || !stage.contains(e.target) || !(e.ctrlKey || e.metaKey)) return;
   e.preventDefault();
-  const f = e.deltaY < 0 ? 1.12 : 1 / 1.12;
-  applyZoom(state.zoom * f);
+  const f = Math.exp(-clamp(e.deltaY, -100, 100) * 0.002);
+  applyZoom(state.zoom * f, { x: e.clientX, y: e.clientY });
 }, { passive: false });
 
 /* ============================================================

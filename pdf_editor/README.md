@@ -19,6 +19,10 @@ drawers (use the **pages** and **properties** buttons in the top bar).
 - **Import a PDF** — via the *Open* button or by dragging a file onto the window.
 - **Page overview** — thumbnails on the left show every page; click one to jump.
   Add blank pages or delete the current page from the panel header.
+- **Zoom and move** — zoom buttons keep the center of the view in place;
+  Ctrl+wheel zooms around the pointer. Drag empty page space to move around a
+  zoomed page, hold Space while dragging to pan over annotations, or use the
+  middle mouse button. On touch screens, drag with one finger and pinch with two.
 - **Annotate with the tools on the left:**
   - **Select** — move, resize and rotate anything you've placed (V)
   - **Pan** — drag to scroll the page (H)
@@ -37,6 +41,12 @@ drawers (use the **pages** and **properties** buttons in the top bar).
   text is stored as real selectable text (with embedded fonts), images and
   signatures are embedded, shapes stay vector, and the file downloads as
   `*-edited.pdf`.
+- **Export Word** — choose *Editable text* for a `.docx` with selectable PDF
+  text (including added text boxes), or *Keep appearance* for a `.docx` with
+  each edited PDF page as an image. If any page has no selectable text, the
+  editable option switches to page images so a scanned page is not lost.
+  Both exports run locally in your browser. On phones, the Word choices are
+  in the top bar menu.
 
 ## Shortcuts
 
@@ -50,6 +60,7 @@ drawers (use the **pages** and **properties** buttons in the top bar).
 | `Ctrl+=` / `Ctrl+-` / `Ctrl+0` | Zoom in / out / 100% |
 | `Ctrl+scroll` | Zoom |
 | `V H T P Y R O L A` | Switch tools |
+| Hold `Space` and drag | Pan the page temporarily |
 | Arrow keys | Nudge selection (hold Shift for 10×) |
 | `Esc` | Deselect / exit tool |
 
@@ -59,6 +70,7 @@ drawers (use the **pages** and **properties** buttons in the top bar).
 index.html        app shell + layout
 styles.css        all styling
 app.js            all editor logic (rendering, tools, save pipeline)
+word-export.js    local PDF-to-Word conversion and DOCX packaging
 fonts.js          base64-embedded TTF fonts (Roboto family + Pacifico)
 fonts/           raw font files (source for fonts.js)
 libs/             vendor libraries: pdf.js, pdf-lib, fontkit, fabric.js
@@ -86,3 +98,6 @@ wrapped in `window.EMBEDDED_FONTS = { ... };`
   color so it renders in every PDF viewer (some viewers need real ExtGState
   entries, which pdf-lib can't always attach to every PDF's page tree).
 - Very large multi-page documents work, but thumbnails render lazily as you scroll.
+- Editable Word export keeps text and page breaks; complex PDF columns, tables,
+  drawings, and typography may need cleanup in Word. Keep appearance preserves
+  those visuals, but the page content is not editable text.

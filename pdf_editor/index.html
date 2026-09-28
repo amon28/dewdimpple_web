@@ -76,6 +76,15 @@
       <svg viewBox="0 0 24 24" data-icon="save"></svg>
       <span id="saveLabel">Save PDF</span>
     </button>
+    <div class="export-wrap">
+      <button id="btnWord" class="tb-btn" title="Export to Word" aria-haspopup="true" aria-expanded="false" disabled>
+        <svg viewBox="0 0 24 24" data-icon="word"></svg><span>Export Word</span>
+      </button>
+      <div id="wordMenu" class="export-menu hidden" role="menu">
+        <button data-word-mode="editable" role="menuitem"><strong>Editable text</strong><small>Extract text and added text boxes</small></button>
+        <button data-word-mode="layout" role="menuitem"><strong>Keep appearance</strong><small>Each page becomes an image in Word</small></button>
+      </div>
+    </div>
   </header>
 
   <!-- mobile menu dropdown -->
@@ -90,6 +99,9 @@
     <button data-act="zoomin"><svg viewBox="0 0 24 24" data-icon="plus"></svg> Zoom in</button>
     <button data-act="zoomout"><svg viewBox="0 0 24 24" data-icon="minus"></svg> Zoom out</button>
     <button data-act="fitwidth"><svg viewBox="0 0 24 24" data-icon="fit"></svg> Fit width</button>
+    <div class="menu-sep"></div>
+    <button data-act="word-editable"><svg viewBox="0 0 24 24" data-icon="word"></svg> Word: editable text</button>
+    <button data-act="word-layout"><svg viewBox="0 0 24 24" data-icon="word"></svg> Word: keep appearance</button>
   </div>
 
   <!-- ===================== WORKSPACE ===================== -->
@@ -448,6 +460,7 @@
 <script src="libs/fontkit.umd.min.js"></script>
 <script src="libs/fabric.min.js"></script>
 <script src="fonts.js"></script>
+<script src="word-export.js"></script>
 <script src="app.js"></script>
 </body>
 </html>

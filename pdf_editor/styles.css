@@ -103,6 +103,22 @@ input, select { font-family: inherit; font-size: 12.5px; }
 .tb-btn.primary:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
 .tb-btn.primary:disabled { background: #a5a3ea; border-color: #a5a3ea; }
 
+.export-wrap { position: relative; flex: 0 0 auto; }
+.export-menu {
+  position: absolute; right: 0; top: calc(100% + 7px);
+  width: 245px; padding: 5px; background: var(--panel);
+  border: 1px solid var(--border); border-radius: 10px;
+  box-shadow: var(--shadow-lg); z-index: 70;
+}
+.export-menu button {
+  display: flex; flex-direction: column; align-items: flex-start;
+  width: 100%; padding: 9px 10px; border: 0; border-radius: 7px;
+  background: transparent; color: var(--text); cursor: pointer; text-align: left;
+}
+.export-menu button:hover, .export-menu button:focus-visible { background: var(--accent-soft); outline: none; }
+.export-menu strong { font-size: 12.5px; font-weight: 600; }
+.export-menu small { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
 .filename {
   max-width: 240px;
   overflow: hidden;
@@ -247,6 +263,8 @@ input, select { font-family: inherit; font-size: 12.5px; }
 }
 #stage.panning { cursor: grab; }
 #stage.panning:active { cursor: grabbing; }
+#stage.space-pan, #stage.space-pan .upper-canvas { cursor: grab !important; }
+#stage.dragging-page, #stage.dragging-page .upper-canvas { cursor: grabbing !important; }
 
 #viewport {
   min-width: 100%; min-height: 100%;
@@ -691,6 +709,11 @@ input[type="range"] { width: 100%; accent-color: var(--accent); height: 22px; ma
 /* touch drawing must not scroll/zoom the page */
 .canvas-container { touch-action: none; }
 
+@media (min-width: 861px) and (max-width: 1120px) {
+  #btnWord { width: 34px; padding: 0; justify-content: center; }
+  #btnWord span { display: none; }
+}
+
 @media (max-width: 860px) {
   :root {
     --topbar-h: 48px;
@@ -709,6 +732,7 @@ input[type="range"] { width: 100%; accent-color: var(--accent); height: 22px; ma
   .filename { display: none; }
   .tb-btn { width: 32px; padding: 0; justify-content: center; }
   .tb-btn.primary { width: 40px; height: 34px; padding: 0; }
+  .export-wrap { display: none; }
   .tb-btn span { display: none; }
   /* secondary actions live in the burger menu */
   #btnOpen, #topbar .tb-group[aria-label="Zoom"] { display: none; }
