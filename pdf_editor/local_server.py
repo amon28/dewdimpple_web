@@ -43,7 +43,7 @@ class StudioHandler(BaseHTTPRequestHandler):
         host = self.headers.get("Host", "").split(":", 1)[0].lower()
         if host in ("127.0.0.1", "localhost"):
             return True
-        self.send_error(403)
+        self.json_error(403, "The local converter only accepts requests to 127.0.0.1 or localhost.")
         return False
 
     def reply(self, status: int, data: bytes, content_type: str, **headers: str) -> None:
@@ -64,17 +64,22 @@ class StudioHandler(BaseHTTPRequestHandler):
     def json_reply(self, status: int, value: dict) -> None:
         self.reply(status, json.dumps(value).encode("utf-8"), "application/json; charset=utf-8")
 
+    def json_error(self, status: int, message: str) -> None:
+        # Unlike send_error(), this keeps the CORS headers so a cross-origin
+        # page can read the reason instead of seeing a network failure.
+        self.json_reply(status, {"error": message})
+
     def do_OPTIONS(self) -> None:
         if not self.valid_host():
             return
         if urlsplit(self.path).path != "/api/word":
-            self.send_error(404)
+            self.json_error(404, "Not found.")
             return
         if self.headers.get("Origin") not in ALLOWED_ORIGINS:
-            self.send_error(403)
+            self.json_error(403, "This page is not allowed to use the local converter.")
             return
         if self.headers.get("Access-Control-Request-Method") != "POST":
-            self.send_error(405)
+            self.json_error(405, "Only POST is supported.")
             return
         self.reply(
             204,
@@ -110,27 +115,27 @@ class StudioHandler(BaseHTTPRequestHandler):
             return
         origin = self.headers.get("Origin")
         if origin and origin not in ALLOWED_ORIGINS:
-            self.send_error(403)
+            self.json_error(403, "This page is not allowed to use the local converter.")
             return
         if urlsplit(self.path).path != "/api/word":
-            self.send_error(404)
+            self.json_error(404, "Not found.")
             return
         if Converter is None:
-            self.json_reply(503, {"error": "The local converter is not installed. Run start-local.cmd."})
+            self.json_error(503, "The local converter is not installed. Run start-local.cmd.")
             return
         if self.headers.get("Content-Type", "").split(";", 1)[0].strip() != "application/pdf":
-            self.json_reply(415, {"error": "Expected a PDF file."})
+            self.json_error(415, "Expected a PDF file.")
             return
         try:
             length = int(self.headers.get("Content-Length", "0"))
         except ValueError:
             length = 0
         if length < 5 or length > MAX_PDF_BYTES:
-            self.json_reply(413, {"error": "PDF must be between 5 bytes and 40 MB."})
+            self.json_error(413, "PDF must be between 5 bytes and 40 MB.")
             return
         pdf_bytes = self.rfile.read(length)
         if len(pdf_bytes) != length or not pdf_bytes.startswith(b"%PDF-"):
-            self.json_reply(400, {"error": "Invalid PDF data."})
+            self.json_error(400, "Invalid PDF data.")
             return
         try:
             with tempfile.TemporaryDirectory(prefix="pdf-studio-") as temp:
@@ -152,7 +157,7 @@ class StudioHandler(BaseHTTPRequestHandler):
             )
         except Exception:
             logging.exception("PDF to Word conversion failed")
-            self.json_reply(422, {"error": "Could not convert this PDF. Check the local server log."})
+            self.json_error(422, "Could not convert this PDF. Check the local server log.")
 
 
 def main() -> None:

@@ -433,9 +433,6 @@ function commitPre() {
 }
 function pushUndo(snapshot) {
   if (state.loading) return;
-  if (state.loading) return;
-  pendingPre = null; // any explicit push supersedes a stale gesture snapshot
-  if (state.loading) return;
   pendingPre = null; // any explicit push supersedes a stale gesture snapshot
   const snap = snapshot !== undefined ? snapshot : JSON.stringify(state.annotations);
   if (state.undoStack[state.undoStack.length - 1] === snap) return; // skip no-op snapshots
@@ -1681,6 +1678,10 @@ const pinchTouches = new Map(); // pointerId -> {x, y}
 let pinchState = null;
 let pinchSettling = false;
 let pinchRAF = null;
+// The one touch whose pointerdown reached fabric (not claimed by page pan).
+// It must not be handed to page pan after a pinch, or fabric never sees its
+// pointerup and stays stuck mid-stroke / mid-drag.
+let fabricTouchId = null;
 
 function pinchDist(pts) { return Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y); }
 function pinchMid(pts) { return { x: (pts[0].x + pts[1].x) / 2, y: (pts[0].y + pts[1].y) / 2 }; }
@@ -1728,8 +1729,10 @@ async function finishPinch(p) {
     if (pinchTouches.size >= 2) beginPinch(Array.from(pinchTouches.values()).slice(0, 2));
     else if (pinchTouches.size === 1) {
       const [id, point] = pinchTouches.entries().next().value;
-      panState = { id, x: point.x, y: point.y, sl: stage.scrollLeft, st: stage.scrollTop };
-      stage.classList.add('dragging-page');
+      if (id !== fabricTouchId) {
+        panState = { id, x: point.x, y: point.y, sl: stage.scrollLeft, st: stage.scrollTop };
+        stage.classList.add('dragging-page');
+      }
     }
   }
 }
@@ -1768,6 +1771,7 @@ function updatePinch(pts) {
 
 function endPinchTouch(e) {
   pinchTouches.delete(e.pointerId);
+  if (e.pointerId === fabricTouchId) fabricTouchId = null;
   if (pinchTouches.size >= 2 || !pinchState) return;
   const p = pinchState;
   pinchState = null;
@@ -1779,7 +1783,10 @@ stage.addEventListener('pointerdown', (e) => {
   if (e.pointerType !== 'touch' || !state.pdfDoc) return;
   pinchTouches.set(e.pointerId, { x: e.clientX, y: e.clientY });
   if (pinchSettling) { e.preventDefault(); e.stopPropagation(); return; }
-  if (pinchTouches.size < 2) return;
+  if (pinchTouches.size < 2) {
+    fabricTouchId = panState && panState.id === e.pointerId ? null : e.pointerId;
+    return;
+  }
   e.preventDefault();
   e.stopPropagation();
   if (pinchState) return;
